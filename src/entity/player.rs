@@ -42,7 +42,7 @@ impl Entity for Player {
     fn set_velocity(&mut self, new_vel: Vec2<f32>) { self.vel = new_vel; }
     fn position(&self) -> Vec2<f32> { self.pos }
     fn set_position(&mut self, new_pos: Vec2<f32>) { self.pos = new_pos }
-    fn physical_properties(&self) -> PhysicalProperties { self.properties }
+    fn physical_properties<'a>(&'a self) -> &'a PhysicalProperties { &self.properties }
     fn bounds(&self) -> Rect { self.base_bounds.move_vec(self.pos) }
     fn is_on_ground(&self) -> bool { self.on_ground }
     fn hit_y(&mut self, value: bool) { self.on_ground = value }

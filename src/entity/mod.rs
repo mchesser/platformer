@@ -37,7 +37,7 @@ pub trait Entity {
     /// Sets the position of an entity
     fn set_position(&mut self, new_pos: Vec2<f32>);
     /// Gets the entites physical properties
-    fn physical_properties(&self) -> PhysicalProperties;
+    fn physical_properties<'a>(&'a self) -> &'a PhysicalProperties;
     // Returns true if friction should be applied, and false otherwise
     fn apply_friction(&self) -> bool {
         abs(self.acceleration().x) == 0.0 || (self.velocity().x != 0.0 &&
@@ -64,7 +64,7 @@ pub fn physics<T: Entity>(entity: &mut T, map: &Map, secs: f32) {
     new_velocity = new_velocity + air_resistance(entity).mul(secs);
     // Decrease X velocity due to friction
     if entity.is_on_ground() && entity.apply_friction() {
-        let friction = 0.9 * GRAVITY * secs;
+        let friction = 0.9 * GRAVITY * entity.physical_properties().stopping_bonus * secs;
         new_velocity.x =
             if new_velocity.x < 0.0 {
                 min(new_velocity.x + friction, 0.0)
