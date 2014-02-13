@@ -27,12 +27,13 @@ pub struct Player {
     on_ground  : bool,
     properties : PhysicalProperties,
     animations : ~[Animation],
-    animation_state: AnimationState
+    state      : AnimationState
 }
 
 enum AnimationState {
     Standing = 0u,
     Walking  = 1u,
+    InAir    = 2u,
 }
 
 impl Entity for Player {
@@ -59,23 +60,43 @@ impl Player {
             num_frames_x: 1,
             num_frames_y: 1,
         };
-        let stand_animation = Animation::new(stand_sprite, 0.0);
+        let stand_animation = Animation::new(stand_sprite, 0.0, true);
 
         let walk_sprite = Sprite {
             spritesheet: spritesheet.clone(),
-            offset: Vec2::new(64, 0),
+            offset: Vec2::new(1*64, 0*128),
             frame_width: 64,
             frame_height: 128,
             num_frames_x: 6,
             num_frames_y: 1,
         };
-        let walk_animation = Animation::new(walk_sprite, 0.2);
+        let walk_animation = Animation::new(walk_sprite, 0.2, true);
+
+        let jump_sprite = Sprite {
+            spritesheet: spritesheet.clone(),
+            offset: Vec2::new(7*64, 1*128),
+            frame_width: 64,
+            frame_height: 128,
+            num_frames_x: 3,
+            num_frames_y: 1,
+        };
+        let jump_animation = Animation::new(jump_sprite, 0.4, false);
+
+        let falling_sprite = Sprite {
+            spritesheet: spritesheet.clone(),
+            offset: Vec2::new(8*64, 1*128),
+            frame_width: 64,
+            frame_height: 128,
+            num_frames_x: 2,
+            num_frames_y: 1,
+        };
+        let falling_animation = Animation::new(falling_sprite, 0.4, true);
 
         Player {
             accel: Vec2::new(0.0, 9.8),
             vel: Vec2::zero(),
             pos: position,
-            base_bounds: Rect::new(0.0, 0.0, 32.0, 90.0),
+            base_bounds: Rect::new(14.0, 36.0, 32.0, 92.0),
             base_hitbox: Rect::new(0.0, 0.0, 32.0, 32.0),
             keyboard: keyboard,
             on_ground: false,
@@ -85,12 +106,12 @@ impl Player {
                 acting_area   : 0.760, // (m^2)
                 movement_accel: 3.000,
                 max_velocity  : 6.000, // (m/s)
-                jump_accel    : 5.000, // (m/s)
+                jump_accel    : 8.000, // (m/s)
                 jump_time     : 0.000, // (secs)
-                stopping_bonus: 1.000,
+                stopping_bonus: 3.000,
             },
-            animations: box [stand_animation, walk_animation],
-            animation_state: Standing,
+            animations: box [stand_animation, walk_animation, jump_animation, falling_animation],
+            state: Standing,
         }
     }
 
@@ -98,15 +119,30 @@ impl Player {
         self.handle_input();
         entity::physics(self, map, secs);
 
-        if abs(self.velocity().x) < 0.1 {
-            self.animation_state = Standing;
-        }
-        else {
-            self.animation_state = Walking;
-            self.animations[Walking as uint].frame_time = 0.7 / abs(self.velocity().x)
+        if abs(self.acceleration().x) != 0.0 {
+            let flip = self.acceleration().x < 0.0;
+            self.animations[self.state as uint].flip_horizontal(flip);
         }
 
-        self.animations[self.animation_state as uint].update(secs);
+
+        // If the entity is on the ground, then it must be standing or walking
+        if self.on_ground {
+            if self.acceleration().x == 0.0 {
+                self.state = Standing;
+            }
+            else if self.velocity().x != 0.0 {
+                self.state = Walking;
+                self.animations[self.state as uint].frame_time = 0.7 / abs(self.velocity().x)
+            }
+        }
+        // The entity is in the air, so it must be jumping or falling
+        else {
+            if self.velocity().y > 0.0 {
+                self.state = InAir;
+            }
+        }
+
+        self.animations[self.state as uint].update(secs);
     }
 
     fn handle_input(&mut self) {
@@ -125,11 +161,13 @@ impl Player {
 
         if keyboard.get().is_new_keypress(keycode::UpKey) {
             self.vel = self.vel + Vec2::new(0.0, -self.properties.jump_accel);
+            self.state = InAir;
+            self.animations[self.state as uint].reset();
         }
     }
 
     pub fn draw(&self, renderer: &Renderer) {
         let pos = Vec2::new(self.pos.x as i32, self.pos.y as i32);
-        self.animations[self.animation_state as uint].draw(pos, renderer);
+        self.animations[self.state as uint].draw(pos, renderer);
     }
 }
