@@ -35,8 +35,6 @@ pub struct Animation {
     frame: Vec2<i32>,
     frame_time: f32,
     wait_time: f32,
-    stopped: bool,
-    ended: bool
 }
 
 impl Animation {
@@ -46,13 +44,11 @@ impl Animation {
             frame: Vec2::zero(),
             frame_time: frame_time,
             wait_time: 0.0,
-            stopped: false,
-            ended: false
         }
     }
 
     pub fn update(&mut self, secs: f32) {
-        if self.stopped {
+        if self.frame_time == 0.0 {
             self.frame.x = 0;
         }
         else {
