@@ -73,8 +73,12 @@ pub fn physics<T: Entity>(entity: &mut T, map: &Map, secs: f32) {
                 max(new_velocity.x - friction, 0.0)
             };
     }
-    new_velocity.x = clamp(-7.5, new_velocity.x, 7.5);
+
+    // Ensure that the velocity doesn't get too hight
+    let max_vel = entity.physical_properties().max_velocity;
+    new_velocity.x = clamp(new_velocity.x, -max_vel, max_vel);
     entity.set_velocity(new_velocity);
+
     let mut new_position = entity.position();
     // Calculate the new x position
     let move_x = entity.velocity().x * secs * PIXEL_SCALE;
@@ -87,6 +91,7 @@ pub fn physics<T: Entity>(entity: &mut T, map: &Map, secs: f32) {
         new_position.x += move_x;
     }
     entity.set_position(new_position);
+
     // Calculate the new y position
     let move_y = new_velocity.y * secs * PIXEL_SCALE;
     let collision_y = map_collision_y(entity, map, move_y);
@@ -100,8 +105,10 @@ pub fn physics<T: Entity>(entity: &mut T, map: &Map, secs: f32) {
         entity.hit_y(false);
     }
     entity.set_position(new_position);
+
     entity.set_velocity(new_velocity);
 }
+
 fn air_resistance<T: Entity>(entity: &T) -> Vec2<f32> {
     static AIR_DENSITY: f32 = 1.2; // (kg/m^3)
     if entity.velocity().length_sqr() > 0.1 {
@@ -118,6 +125,7 @@ fn air_resistance<T: Entity>(entity: &T) -> Vec2<f32> {
         Vec2::<f32>::zero()
     }
 }
+
 /// Calculates the maximum distance the entity can travel in the x direction
 fn map_collision_x<T: Entity>(entity: &T, map: &Map, max_dist: f32) -> f32 {
     if max_dist != 0.0 {
@@ -153,6 +161,7 @@ fn map_collision_x<T: Entity>(entity: &T, map: &Map, max_dist: f32) -> f32 {
         0.0
     }
 }
+
 /// Scan for solid tiles in the x direction
 fn scan_tiles_x(map: &Map, start_x: int, end_x: int, dir_x: int, start_y: int, end_y: int) -> int {
     for x in range_step_inclusive(start_x, end_x, dir_x) {
@@ -164,6 +173,7 @@ fn scan_tiles_x(map: &Map, start_x: int, end_x: int, dir_x: int, start_y: int, e
     }
     end_x
 }
+
 /// Calculates the maximum distance the entity can travel in the x direction
 fn map_collision_y<T: Entity>(entity: &T, map: &Map, max_dist: f32) -> f32 {
     if max_dist != 0.0 {
@@ -199,6 +209,7 @@ fn map_collision_y<T: Entity>(entity: &T, map: &Map, max_dist: f32) -> f32 {
         0.0
     }
 }
+
 /// Scan for solid tiles in the y direction
 fn scan_tiles_y(map: &Map, start_y: int, end_y: int, dir_y: int, start_x: int, end_x: int) -> int {
     for x in range(start_x, end_x) {
