@@ -5,7 +5,7 @@ use sdl2::rect::Rect;
 
 use gmath::vectors::Vec2;
 
-
+#[deriving(Clone, Eq)]
 pub struct Sprite {
     spritesheet: Rc<~Texture>,
     offset: Vec2<i32>,
@@ -32,34 +32,47 @@ impl Sprite {
     }
 }
 
+#[deriving(Clone, Eq)]
 pub struct Animation {
     sprite: Sprite,
-    frame: Vec2<i32>,
     frame_time: f32,
+    repeat: bool
+}
+
+
+pub struct AnimationPlayer {
+    animation: Animation,
+    frame: Vec2<i32>,
+    speed_up: f32,
     wait_time: f32,
-    repeat: bool,
     stopped: bool,
     flip_state: RendererFlip
 }
 
-impl Animation {
-    pub fn new(sprite: Sprite, frame_time: f32, repeat: bool) -> Animation {
-        Animation {
-            sprite: sprite,
+impl AnimationPlayer {
+    pub fn new(animation: Animation) -> AnimationPlayer {
+        AnimationPlayer {
+            animation: animation,
             frame: Vec2::zero(),
-            frame_time: frame_time,
+            speed_up: 1.0,
             wait_time: 0.0,
-            repeat: repeat,
             stopped: false,
             flip_state: FlipNone
+        }
+    }
+
+    pub fn play(&mut self, animation: Animation) {
+        if self.animation != animation {
+            self.animation = animation;
+            self.reset();
         }
     }
 
     pub fn reset(&mut self) {
         self.frame = Vec2::zero();
         self.wait_time = 0.0;
+        self.speed_up = 1.0;
         self.stopped = false;
-        self.flip_state = FlipNone;
     }
 
     pub fn flip_horizontal(&mut self, flip: bool) {
@@ -72,16 +85,16 @@ impl Animation {
     }
 
     pub fn update(&mut self, secs: f32) {
-        if !self.stopped  && self.frame_time != 0.0 {
+        if !self.stopped  && self.animation.frame_time != 0.0 {
             self.wait_time += secs;
-            while self.wait_time > self.frame_time {
-                self.wait_time -= self.frame_time;
+            while self.wait_time > self.animation.frame_time * self.speed_up {
+                self.wait_time -= self.animation.frame_time * self.speed_up;
                 self.frame.x =
-                    if self.frame.x+1 < self.sprite.num_frames_x {
+                    if self.frame.x+1 < self.animation.sprite.num_frames_x {
                         self.frame.x + 1
                     }
                     else {
-                        if !self.repeat {
+                        if !self.animation.repeat {
                             self.stopped = true;
                             break;
                         }
@@ -92,6 +105,6 @@ impl Animation {
     }
 
     pub fn draw(&self, pos: Vec2<i32>, renderer: &Renderer) {
-        self.sprite.draw(self.frame, pos, self.flip_state, renderer);
+        self.animation.sprite.draw(self.frame, pos, self.flip_state, renderer);
     }
 }

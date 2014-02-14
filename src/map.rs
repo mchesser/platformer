@@ -4,6 +4,7 @@ use std::rc::Rc;
 use sdl2::render;
 use sdl2::rect::Rect;
 
+use gmath::vectors::Vec2;
 use game::tiles::{TileSet, TileInfo};
 
 pub struct Map {
@@ -55,15 +56,13 @@ impl Map {
         self.tiles[x + y * self.width()]
     }
 
-    pub fn draw(&self, renderer: &render::Renderer) {
+    pub fn draw(&self, camera: Vec2<i32>, renderer: &render::Renderer) {
         for tile_x in range(0, self.width()) {
             for tile_y in range(0, self.height()) {
-                let x = tile_x * self.tile_size() as uint;
-                let y = tile_y * self.tile_size() as uint;
-
-                let dest_rect = Rect::new(x as i32, y as i32,
+                let x = (tile_x * self.tile_size() as uint) as i32;
+                let y = (tile_y * self.tile_size() as uint) as i32;
+                let dest_rect = Rect::new(x - camera.x, y - camera.y,
                         self.tile_size() as i32, self.tile_size() as i32);
-
                 self.tileset.borrow().draw(self.get(tile_x, tile_y), dest_rect, renderer);
             }
         }

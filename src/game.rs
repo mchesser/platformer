@@ -19,6 +19,7 @@ pub struct Game {
     map: Map,
     tileset: Rc<TileSet>,
     player: Player,
+    camera: Vec2<i32>
 }
 
 impl Game {
@@ -42,9 +43,10 @@ impl Game {
                 .ok().expect("Failed to load player sprite"));
 
         Game {
-            map: Map::new_test(50, 18, tileset.clone()),
+            map: Map::new_test(50, 30, tileset.clone()),
             player: Player::new(Vec2::new(50.0, 50.0), player_spritesheet.clone(), keyboard),
-            tileset: tileset
+            tileset: tileset,
+            camera: Vec2::zero(),
         }
     }
 
@@ -53,8 +55,13 @@ impl Game {
         self.player.update(map, secs);
     }
 
-    pub fn draw(&self, renderer: &Renderer) {
-        self.map.draw(renderer);
-        self.player.draw(renderer);
+    pub fn draw(&mut self, renderer: &Renderer) {
+        // Center the camera on the player:
+        let draw_rect = renderer.get_viewport();
+
+        self.camera = self.player.rounded_position()
+                - Vec2::new((draw_rect.w as f32 / 2.0) as i32, (draw_rect.h as f32 / 2.0) as i32);
+        self.map.draw(self.camera, renderer);
+        self.player.draw(self.camera, renderer);
     }
 }

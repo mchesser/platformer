@@ -6,7 +6,7 @@ use game::entity;
 use game::entity::Entity;
 use game::entity::PhysicalProperties;
 use game::map::Map;
-use game::sprite::{Sprite, Animation};
+use game::sprite::{Sprite, Animation, AnimationPlayer};
 
 use gmath::vectors::Vec2;
 use gmath::shapes::Rect;
@@ -26,14 +26,15 @@ pub struct Player {
     keyboard   : Rc<RefCell<KeyboardState>>,
     on_ground  : bool,
     properties : PhysicalProperties,
-    animations : ~[Animation],
-    state      : AnimationState
+    animations : EntityAnimations,
+    animation_player: AnimationPlayer
 }
 
-enum AnimationState {
-    Standing = 0u,
-    Walking  = 1u,
-    InAir    = 2u,
+pub struct EntityAnimations {
+    idle: Animation,
+    walk: Animation,
+    jump: Animation,
+    fall: Animation,
 }
 
 impl Entity for Player {
@@ -50,6 +51,10 @@ impl Entity for Player {
 }
 
 impl Player {
+    pub fn rounded_position(&self) -> Vec2<i32> {
+        Vec2::new(self.pos.x as i32, self.pos.y as i32)
+    }
+
     pub fn new(position: Vec2<f32>, spritesheet: Rc<~Texture>,
             keyboard: Rc<RefCell<KeyboardState>>) -> Player {
         let stand_sprite = Sprite {
@@ -60,7 +65,7 @@ impl Player {
             num_frames_x: 1,
             num_frames_y: 1,
         };
-        let stand_animation = Animation::new(stand_sprite, 0.0, true);
+        let stand_animation = Animation { sprite: stand_sprite, repeat: true, frame_time: 0.0 };
 
         let walk_sprite = Sprite {
             spritesheet: spritesheet.clone(),
@@ -70,17 +75,17 @@ impl Player {
             num_frames_x: 6,
             num_frames_y: 1,
         };
-        let walk_animation = Animation::new(walk_sprite, 0.2, true);
+        let walk_animation = Animation { sprite: walk_sprite, repeat: true, frame_time: 0.7 };
 
         let jump_sprite = Sprite {
             spritesheet: spritesheet.clone(),
             offset: Vec2::new(7*64, 1*128),
             frame_width: 64,
             frame_height: 128,
-            num_frames_x: 3,
+            num_frames_x: 1,
             num_frames_y: 1,
         };
-        let jump_animation = Animation::new(jump_sprite, 0.4, false);
+        let jump_animation = Animation { sprite: jump_sprite, repeat: true, frame_time: 0.6 };
 
         let falling_sprite = Sprite {
             spritesheet: spritesheet.clone(),
@@ -90,7 +95,7 @@ impl Player {
             num_frames_x: 2,
             num_frames_y: 1,
         };
-        let falling_animation = Animation::new(falling_sprite, 0.4, true);
+        let falling_animation = Animation { sprite: falling_sprite, repeat: true, frame_time: 0.5 };
 
         Player {
             accel: Vec2::new(0.0, 9.8),
@@ -110,8 +115,13 @@ impl Player {
                 jump_time     : 0.000, // (secs)
                 stopping_bonus: 3.000,
             },
-            animations: box [stand_animation, walk_animation, jump_animation, falling_animation],
-            state: Standing,
+            animations: EntityAnimations {
+                idle: stand_animation.clone(),
+                walk: walk_animation,
+                jump: jump_animation,
+                fall: falling_animation
+            },
+            animation_player: AnimationPlayer::new(stand_animation.clone()),
         }
     }
 
@@ -121,28 +131,28 @@ impl Player {
 
         if abs(self.acceleration().x) != 0.0 {
             let flip = self.acceleration().x < 0.0;
-            self.animations[self.state as uint].flip_horizontal(flip);
+            self.animation_player.flip_horizontal(flip);
         }
 
 
         // If the entity is on the ground, then it must be standing or walking
         if self.on_ground {
             if self.acceleration().x == 0.0 {
-                self.state = Standing;
+                self.animation_player.play(self.animations.idle.clone());
             }
             else if self.velocity().x != 0.0 {
-                self.state = Walking;
-                self.animations[self.state as uint].frame_time = 0.7 / abs(self.velocity().x)
+                self.animation_player.play(self.animations.walk.clone());
+                self.animation_player.speed_up = 1.0 / abs(self.velocity().x);
             }
         }
         // The entity is in the air, so it must be jumping or falling
         else {
             if self.velocity().y > 0.0 {
-                self.state = InAir;
+                self.animation_player.play(self.animations.fall.clone());
             }
         }
 
-        self.animations[self.state as uint].update(secs);
+        self.animation_player.update(secs);
     }
 
     fn handle_input(&mut self) {
@@ -161,13 +171,13 @@ impl Player {
 
         if keyboard.get().is_new_keypress(keycode::UpKey) {
             self.vel = self.vel + Vec2::new(0.0, -self.properties.jump_accel);
-            self.state = InAir;
-            self.animations[self.state as uint].reset();
+            self.animation_player.play(self.animations.jump.clone());
+            self.animation_player.reset();
         }
     }
 
-    pub fn draw(&self, renderer: &Renderer) {
-        let pos = Vec2::new(self.pos.x as i32, self.pos.y as i32);
-        self.animations[self.state as uint].draw(pos, renderer);
+    pub fn draw(&self, camera: Vec2<i32>, renderer: &Renderer) {
+        let pos = Vec2::new(self.pos.x as i32, self.pos.y as i32) - camera;
+        self.animation_player.draw(pos, renderer);
     }
 }
