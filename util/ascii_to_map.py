@@ -2,7 +2,7 @@ import struct
 
 MAGIC = ['M', 'A', 'P']
 VERSION = 1
-tile_dict = { '.' : 0, '#' : 1 }
+tile_dict = { '.' : 0, 'R' : 1, '-' : 2, 'L' : 3, '<' : 4, '#' : 1 }
 
 in_file = file('../assets/maps/map1.txt')
 translated = []
