@@ -5,7 +5,10 @@ use gmath::vectors::Vec2;
 use gmath::shapes::Rect;
 use game::map::Map;
 
-pub mod player;
+use sdl2::render::Renderer;
+
+pub mod creature;
+pub mod controller;
 
 static PIXEL_SCALE: f32 = 52.0;
 static GRAVITY: f32 = 9.8;
@@ -49,6 +52,12 @@ pub trait Entity {
     fn hit_y(&mut self, value: bool);
     /// Returns the entity's bounding rectangle
     fn bounds(&self) -> Rect;
+    
+    fn update(&mut self, map: &Map, secs: f32);
+    
+    fn draw(&self, camera: Vec2<i32>, renderer: &Renderer);
+    
+    fn center(&self) -> Vec2<i32>;
 }
 
 /// Update entity based on physics

@@ -85,9 +85,9 @@ fn main() {
         if log_timer.elapsed_seconds() > 1.0 {
             log_timer.reset();
             println!("PLAYER: velocity {}, position {}, on_ground: {:?}",
-                game.player.vel.to_str(),
-                game.player.pos.to_str(),
-                game.player.on_ground
+                game.player.entity.vel.to_str(),
+                game.player.entity.pos.to_str(),
+                game.player.entity.on_ground
             );
             println!("");
         }
