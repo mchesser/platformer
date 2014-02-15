@@ -150,10 +150,10 @@ fn map_collision_x<T: Entity>(entity: &T, map: &Map, max_dist: f32) -> f32 {
         let tile = scan_tiles_x(map, start_x, end_x, dir_x, start_y, end_y) as f32;
         // Calculate the new maximum distance
         if entity.velocity().x < 0.0 {
-            max((tile + 1.0) * tile_size - entity.bounds().left(), max_dist)
+            (tile + 1.0) * tile_size - entity.bounds().left()
         }
         else {
-            min(tile * tile_size - entity.bounds().right(), max_dist)
+            tile * tile_size - entity.bounds().right()
         }
     }
     else {
@@ -212,8 +212,8 @@ fn map_collision_y<T: Entity>(entity: &T, map: &Map, max_dist: f32) -> f32 {
 
 /// Scan for solid tiles in the y direction
 fn scan_tiles_y(map: &Map, start_y: int, end_y: int, dir_y: int, start_x: int, end_x: int) -> int {
-    for x in range(start_x, end_x) {
-        for y in range_step_inclusive(start_y, end_y, dir_y) {
+    for y in range_step_inclusive(start_y, end_y, dir_y) {
+        for x in range(start_x, end_x) {
             if map.tile_info_at(x as uint, y as uint).solid {
                 return y;
             }
