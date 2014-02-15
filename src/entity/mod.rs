@@ -8,7 +8,6 @@ use game::map::Map;
 use sdl2::render::Renderer;
 
 pub mod creature;
-pub mod controller;
 
 static PIXEL_SCALE: f32 = 52.0;
 static GRAVITY: f32 = 9.8;

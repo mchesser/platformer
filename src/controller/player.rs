@@ -3,15 +3,11 @@ use std::cell::RefCell;
 
 use game::map::Map;
 use game::entity::Entity;
+use game::controller::Controller;
 use keyboard::KeyboardState;
-
-use gmath::vectors::Vec2;
-
 use sdl2::keycode;
 
-pub trait Controller {
-    fn update(&mut self, map: &Map, secs: f32);
-}
+use gmath::vectors::Vec2;
 
 pub struct Player<T> {
     entity  : T,

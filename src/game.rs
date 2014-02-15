@@ -9,8 +9,8 @@ use sdl2_image::LoadTexture;
 use gmath::vectors::Vec2;
 use game::entity::Entity;
 use game::entity::creature::Creature;
-use game::entity::controller::Controller;
-use game::entity::controller::Player;
+use game::controller::Controller;
+use game::controller::player::Player;
 use game::map::Map;
 use game::tiles::{TileSet, TileInfo};
 use keyboard::KeyboardState;
@@ -18,6 +18,7 @@ use keyboard::KeyboardState;
 mod map;
 mod tiles;
 mod entity;
+mod controller;
 mod sprite;
 
 pub struct Game {
