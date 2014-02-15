@@ -1,0 +1,13 @@
+============================================
+v0.1 - Basic map
+
+// Map header (12 bytes)
+[format_magic_number = MAP (3 bytes)]
+[format_version = 1 (1 byte)]
+[width (4 bytes, encoded as le_u32)]
+[height (4 bytes, encoded as le_u32)]
+
+// Tiles (width * height * 2 bytes)
+[tile_id (2 bytes, encoded as le_u16)]
+
+============================================

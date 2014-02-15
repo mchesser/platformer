@@ -1,5 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::num::clamp;
+use std::io::File;
 
 use sdl2::render::Renderer;
 use sdl2_image::LoadTexture;
@@ -39,11 +41,14 @@ impl Game {
             tile_info: tile_info
         });
 
+        let mut map_file = File::open(&Path::new("./assets/maps/map1"))
+                .ok().expect("Failed to load map");
+
         let player_spritesheet = Rc::new(renderer.load_texture(&Path::new("./assets/player.png"))
                 .ok().expect("Failed to load player sprite"));
 
         Game {
-            map: Map::new_test(50, 30, tileset.clone()),
+            map: Map::load_map(&mut map_file, tileset.clone()),
             player: Player::new(Vec2::new(50.0, 50.0), player_spritesheet.clone(), keyboard),
             tileset: tileset,
             camera: Vec2::zero(),

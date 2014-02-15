@@ -1,5 +1,6 @@
 use std::vec;
 use std::rc::Rc;
+use std::io::{File, BufReader, MemReader};
 
 use sdl2::render;
 use sdl2::rect::Rect;
@@ -15,23 +16,65 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new_test(width: uint, height: uint, tileset: Rc<TileSet>) -> Map {
-        let mut map = Map {
-            tiles: vec::from_elem(width * height, 0u16),
+    /// Loads a map from a file
+    pub fn load_map(file: &mut File, tileset: Rc<TileSet>) -> Map {
+        static VERSION: u8 = 1;
+        static MAGIC_ID: [u8, ..3] = ['M' as u8, 'A' as u8, 'P' as u8];
+
+        let mut header_buffer = [0, ..12];
+        // Load header into the buffer
+        match file.read(header_buffer) {
+            Ok(n) if n == 12 => {},
+            _ => fail!("Could not read file header"),
+        }
+
+        let mut reader = BufReader::new(header_buffer);
+
+        // Check the magic id
+        match (reader.read_byte(), reader.read_byte(), reader.read_byte()) {
+            (Ok(a), Ok(b), Ok(c)) if [a, b, c] == MAGIC_ID => {},
+            _ => fail!("Invalid magic id")
+        }
+
+        // Check the version number
+        match reader.read_byte() {
+            Ok(a) if a == VERSION => {},
+            _ => fail!("Invalid map version")
+        }
+
+        // Get the width and height of the map
+        let width = match reader.read_le_u32() {
+            Ok(w) => w as uint,
+            Err(err) => fail!("Failed to get map width: {}", err.desc)
+        };
+        let height = match reader.read_le_u32() {
+            Ok(h) => h as uint,
+            Err(err) => fail!("Failed to get map height: {}", err.desc)
+        };
+
+        // Read the tiles
+        let mut tile_buffer: ~[u8] = vec::from_elem(width * height * 2, 0u8);
+        match file.read(tile_buffer) {
+            Ok(n) if n == width * height * 2 => {},
+            Ok(n) => fail!("Invalid number of tiles, expected: {}, but found: {}",
+                           width*height*2, n),
+            _ => fail!("Could not load map tiles")
+        }
+
+        let mut reader = MemReader::new(tile_buffer);
+        let tiles = vec::from_fn(width * height, |_| {
+            match reader.read_le_u16() {
+                Ok(x) => x,
+                Err(err) => fail!("Failed to read map: {}", err.desc)
+            }
+        });
+
+        Map {
+            tiles: tiles,
             width_: width,
             height_: height,
             tileset: tileset
-        };
-
-        for value in map.tiles.mut_iter().skip(width * (height - 2)) {
-            *value = 2;
         }
-
-        map
-    }
-
-    pub fn new_from_file(filename: ~str) -> Map {
-        unimplemented!();
     }
 
     pub fn width(&self) -> uint {
