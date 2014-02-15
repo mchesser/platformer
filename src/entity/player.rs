@@ -55,6 +55,11 @@ impl Player {
         Vec2::new(self.pos.x as i32, self.pos.y as i32)
     }
 
+    pub fn center(&self) -> Vec2<i32> {
+        let actual_center = self.bounds().center();
+        Vec2::new(actual_center.x as i32, actual_center.y as i32)
+    }
+
     pub fn new(position: Vec2<f32>, spritesheet: Rc<~Texture>,
             keyboard: Rc<RefCell<KeyboardState>>) -> Player {
         let stand_sprite = Sprite {
@@ -109,11 +114,11 @@ impl Player {
                 c_drag        : 0.470,
                 mass          : 70.00, // (kg)
                 acting_area   : 0.760, // (m^2)
-                movement_accel: 3.000,
-                max_velocity  : 6.000, // (m/s)
-                jump_accel    : 8.000, // (m/s)
+                movement_accel: 6.000,
+                max_velocity  : 7.000, // (m/s)
+                jump_accel    : 5.000, // (m/s)
                 jump_time     : 0.000, // (secs)
-                stopping_bonus: 3.000,
+                stopping_bonus: 6.000,
             },
             animations: EntityAnimations {
                 idle: stand_animation.clone(),
@@ -137,12 +142,18 @@ impl Player {
 
         // If the entity is on the ground, then it must be standing or walking
         if self.on_ground {
-            if self.acceleration().x == 0.0 {
+            if self.acceleration().x == 0.0 && self.velocity().x == 0.0 {
                 self.animation_player.play(self.animations.idle.clone());
             }
-            else if self.velocity().x != 0.0 {
+            else {
                 self.animation_player.play(self.animations.walk.clone());
-                self.animation_player.speed_up = 1.0 / abs(self.velocity().x);
+                if self.velocity().x != 0.0 {
+                    self.animation_player.speed_up = 1.0 / abs(self.velocity().x);
+                }
+                else {
+                    self.animation_player.speed_up = 1.0;
+                }
+
             }
         }
         // The entity is in the air, so it must be jumping or falling
@@ -169,7 +180,7 @@ impl Player {
                 0.0
             };
 
-        if keyboard.get().is_new_keypress(keycode::UpKey) {
+        if self.on_ground && keyboard.get().is_new_keypress(keycode::UpKey) {
             self.vel = self.vel + Vec2::new(0.0, -self.properties.jump_accel);
             self.animation_player.play(self.animations.jump.clone());
             self.animation_player.reset();
@@ -179,5 +190,12 @@ impl Player {
     pub fn draw(&self, camera: Vec2<i32>, renderer: &Renderer) {
         let pos = Vec2::new(self.pos.x as i32, self.pos.y as i32) - camera;
         self.animation_player.draw(pos, renderer);
+    }
+
+    #[cfg(debug)]
+    pub fn draw_bounding_rect(&self, camera: Vec2<i32>, renderer: &Renderer)  {
+        renderer.draw_rect(sdl::rect::Rect::new(
+                self.bounds().x as i32 - camera.x, self.bounds().y as i32 - camera.y,
+                self.bounds().width as i32, self.bounds().height() as i32));
     }
 }
