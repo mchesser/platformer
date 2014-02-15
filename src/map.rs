@@ -77,6 +77,14 @@ impl Map {
         }
     }
 
+    pub fn pixel_width(&self) -> i32 {
+        self.width_ as i32 * self.tile_size()
+    }
+
+    pub fn pixel_height(&self) -> i32 {
+        self.height_ as i32 * self.tile_size()
+    }
+
     pub fn width(&self) -> uint {
         self.width_
     }

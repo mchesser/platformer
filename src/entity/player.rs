@@ -51,10 +51,6 @@ impl Entity for Player {
 }
 
 impl Player {
-    pub fn rounded_position(&self) -> Vec2<i32> {
-        Vec2::new(self.pos.x as i32, self.pos.y as i32)
-    }
-
     pub fn center(&self) -> Vec2<i32> {
         let actual_center = self.bounds().center();
         Vec2::new(actual_center.x as i32, actual_center.y as i32)

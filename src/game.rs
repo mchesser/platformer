@@ -64,8 +64,11 @@ impl Game {
         // Center the camera on the player:
         let draw_rect = renderer.get_viewport();
 
-        self.camera = self.player.rounded_position()
+        self.camera = self.player.center()
                 - Vec2::new((draw_rect.w as f32 / 2.0) as i32, (draw_rect.h as f32 / 2.0) as i32);
+        self.camera.x = clamp(self.camera.x, 0, self.map.pixel_width() - draw_rect.w);
+        self.camera.y = clamp(self.camera.y, 0, self.map.pixel_height() - draw_rect.h);
+
         self.map.draw(self.camera, renderer);
         self.player.draw(self.camera, renderer);
     }
