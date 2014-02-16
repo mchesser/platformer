@@ -2,7 +2,11 @@ import struct
 
 MAGIC = ['M', 'A', 'P']
 VERSION = 1
-tile_dict = { '.' : 0, 'R' : 1, '-' : 2, 'L' : 3, '<' : 4, '#' : 1 }
+
+# QWERTYUIOP{
+# ASDFGHJKL:"
+# ZXCVBNM<>?1
+tilemap = '.QWERTYUIOP{ASDFGHJKL:"ZXCVBNM<>?1'
 
 in_file = file('../assets/maps/map1.txt')
 translated = []
@@ -14,7 +18,7 @@ for line in in_file:
     width = len(line.rstrip('\n'))
     height += 1
     for char in line.rstrip('\n'):
-        translated.append(tile_dict[char])
+        translated.append(tilemap.find(char))
             
 in_file.close()
 trans_len = len(translated)

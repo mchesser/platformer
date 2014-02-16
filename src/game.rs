@@ -4,6 +4,7 @@ use std::num::clamp;
 use std::io::File;
 
 use sdl2::render::Renderer;
+use sdl2::render::Texture;
 use sdl2_image::LoadTexture;
 
 use gmath::vectors::Vec2;
@@ -25,13 +26,46 @@ pub struct Game {
     map: Map,
     tileset: Rc<TileSet>,
     player: Player<Creature>,
-    camera: Vec2<i32>
+    camera: Vec2<i32>,
+    background: ~Texture,
 }
 
 impl Game {
     pub fn new(keyboard: Rc<RefCell<KeyboardState>>, renderer: &Renderer) -> Game {
         let tile_info = box [
             TileInfo { solid: false, friction: 0.0 },
+
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
+            TileInfo { solid: true , friction: 1.0 },
             TileInfo { solid: true , friction: 1.0 },
             TileInfo { solid: true , friction: 1.0 },
             TileInfo { solid: true , friction: 1.0 },
@@ -58,12 +92,15 @@ impl Game {
             keyboard: keyboard
         };
 
+        let background = renderer.load_texture(&Path::new("./assets/background.png"))
+                .ok().expect("Failed to load background image");
 
         Game {
             map: Map::load_map(&mut map_file, tileset.clone()),
             player: player,
             tileset: tileset,
             camera: Vec2::zero(),
+            background: background
         }
     }
 
@@ -73,6 +110,8 @@ impl Game {
     }
 
     pub fn draw(&mut self, renderer: &Renderer) {
+        renderer.copy(self.background, None, None);
+
         // Center the camera on the player:
         let draw_rect = renderer.get_viewport();
 
