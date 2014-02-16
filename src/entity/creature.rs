@@ -1,17 +1,15 @@
-use std::rc::Rc;
 use std::num::abs;
 
 use game::entity;
 use game::entity::Entity;
 use game::entity::PhysicalProperties;
 use game::map::Map;
-use game::sprite::{Sprite, Animation, AnimationPlayer};
+use game::sprite::{Animation, AnimationPlayer};
 
 use gmath::vectors::Vec2;
 use gmath::shapes::Rect;
 
 use sdl2::render::Renderer;
-use sdl2::render::Texture;
 
 pub struct Creature {
     accel      : Vec2<f32>,
@@ -93,71 +91,19 @@ impl Entity for Creature {
 }
 
 impl Creature {
-    pub fn new(position: Vec2<f32>, spritesheet: Rc<~Texture>) -> Creature {
-        let stand_sprite = Sprite {
-            spritesheet: spritesheet.clone(),
-            offset: Vec2::new(0, 0),
-            frame_width: 64,
-            frame_height: 128,
-            num_frames_x: 1,
-            num_frames_y: 1,
-        };
-        let stand_animation = Animation { sprite: stand_sprite, repeat: true, frame_time: 0.0 };
-
-        let walk_sprite = Sprite {
-            spritesheet: spritesheet.clone(),
-            offset: Vec2::new(1*64, 0*128),
-            frame_width: 64,
-            frame_height: 128,
-            num_frames_x: 6,
-            num_frames_y: 1,
-        };
-        let walk_animation = Animation { sprite: walk_sprite, repeat: true, frame_time: 0.7 };
-
-        let jump_sprite = Sprite {
-            spritesheet: spritesheet.clone(),
-            offset: Vec2::new(7*64, 1*128),
-            frame_width: 64,
-            frame_height: 128,
-            num_frames_x: 1,
-            num_frames_y: 1,
-        };
-        let jump_animation = Animation { sprite: jump_sprite, repeat: true, frame_time: 0.6 };
-
-        let falling_sprite = Sprite {
-            spritesheet: spritesheet.clone(),
-            offset: Vec2::new(8*64, 1*128),
-            frame_width: 64,
-            frame_height: 128,
-            num_frames_x: 2,
-            num_frames_y: 1,
-        };
-        let falling_animation = Animation { sprite: falling_sprite, repeat: true, frame_time: 0.5 };
-
+    pub fn new(position: Vec2<f32>, base_bounds: Rect, base_hitbox: Rect,
+               properties: PhysicalProperties, animations: CreatureAnimations)
+               -> Creature {
         Creature {
             accel: Vec2::new(0.0, 9.8),
             vel: Vec2::zero(),
             pos: position,
-            base_bounds: Rect::new(14.0, 36.0, 32.0, 92.0),
-            base_hitbox: Rect::new(0.0, 0.0, 32.0, 32.0),
+            base_bounds: base_bounds,
+            base_hitbox: base_hitbox,
             on_ground: false,
-            properties: PhysicalProperties {
-                c_drag        : 0.470,
-                mass          : 70.00, // (kg)
-                acting_area   : 0.760, // (m^2)
-                movement_accel: 6.000,
-                max_velocity  : 7.000, // (m/s)
-                jump_accel    : 5.000, // (m/s)
-                jump_time     : 0.000, // (secs)
-                stopping_bonus: 6.000,
-            },
-            animations: CreatureAnimations {
-                idle: stand_animation.clone(),
-                walk: walk_animation,
-                jump: jump_animation,
-                fall: falling_animation
-            },
-            animation_player: AnimationPlayer::new(stand_animation.clone()),
+            properties: properties,
+            animation_player: AnimationPlayer::new(animations.idle.clone()),
+            animations: animations,
         }
     }
 

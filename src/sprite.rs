@@ -39,7 +39,6 @@ pub struct Animation {
     repeat: bool
 }
 
-
 pub struct AnimationPlayer {
     animation: Animation,
     frame: Vec2<i32>,

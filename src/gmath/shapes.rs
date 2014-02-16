@@ -4,12 +4,14 @@ use gmath::vectors::Vec2;
 use std::num::{min, max};
 
 /// Circle structure, with center and radius
+#[deriving(Clone)]
 pub struct Circle {
     center: Vec2<f32>,
     radius: f32,
 }
 
 /// Rectangle structure
+#[deriving(Clone)]
 pub struct Rect {
     x: f32,
     y: f32,
