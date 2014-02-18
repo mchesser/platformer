@@ -14,6 +14,7 @@ use game::entity::creature::{Creature, CreatureAnimations};
 use game::sprite::{Sprite, Animation};
 use game::controller::Controller;
 use game::controller::player::Player;
+use game::controller::ai::RandomWalker;
 use game::map::Map;
 use game::tiles::{TileSet, TileInfo};
 use keyboard::KeyboardState;
@@ -28,6 +29,7 @@ pub struct Game {
     map: Map,
     tileset: Rc<TileSet>,
     player: Player<Creature>,
+    cat: RandomWalker,
     camera: Vec2<i32>,
     background: ~Texture,
 }
@@ -82,10 +84,15 @@ impl Game {
         let map = Map::load_map(&mut File::open(&Path::new("./assets/maps/map1"))
                 .ok().expect("Failed to load map"), tileset.clone());
 
-        let player_spritesheet = Rc::new(renderer.load_texture(&Path::new("./assets/player.png"))
-                .ok().expect("Failed to load player sprite"));
+        // Load human sprite
+        let human_spritesheet = Rc::new(renderer.load_texture(&Path::new("./assets/player.png"))
+                .ok().expect("Failed to load human sprite"));
+        // Load cat spritesheet
+        let cat_spritesheet = Rc::new(renderer.load_texture(&Path::new("./assets/cat.png"))
+                .ok().expect("Failed to load cat sprite"));
 
-        let player = create_player(Vec2::new(50.0, 50.0), keyboard, player_spritesheet);
+        let player = create_player(Vec2::new(50.0, 50.0), keyboard, human_spritesheet.clone());
+        let cat = create_cat(Vec2::new(400.0, 50.0), cat_spritesheet.clone());
 
         let background = renderer.load_texture(&Path::new("./assets/background.png"))
                 .ok().expect("Failed to load background image");
@@ -93,6 +100,7 @@ impl Game {
         Game {
             map: map,
             player: player,
+            cat: cat,
             tileset: tileset,
             camera: Vec2::zero(),
             background: background
@@ -102,6 +110,7 @@ impl Game {
     pub fn update(&mut self, secs: f32) {
         let map = &self.map;
         self.player.update(map, secs);
+        self.cat.update(map, secs);
     }
 
     pub fn draw(&mut self, renderer: &Renderer) {
@@ -117,6 +126,7 @@ impl Game {
 
         self.map.draw(self.camera, renderer);
         self.player.entity.draw(self.camera, renderer);
+        self.cat.entity.draw(self.camera, renderer);
     }
 }
 
@@ -197,4 +207,80 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
         ),
         keyboard: keyboard
     }
+}
+
+fn create_cat(position: Vec2<f32>, spritesheet: Rc<~Texture>) -> RandomWalker {
+    let fw = 40;
+    let fh = 32;
+    let idle = Animation {
+        sprite: Sprite {
+            spritesheet : spritesheet.clone(),
+            offset      : Vec2::new(0, 0),
+            frame_width : fw,
+            frame_height: fh,
+            num_frames_x: 1,
+            num_frames_y: 1,
+        },
+        repeat: true,
+        frame_time: 0.0
+    };
+    let walk = Animation {
+        sprite: Sprite {
+            spritesheet : spritesheet.clone(),
+            offset      : Vec2::new(0, fh),
+            frame_width : fw,
+            frame_height: fh,
+            num_frames_x: 6,
+            num_frames_y: 1,
+        },
+        repeat: true,
+        frame_time: 0.7
+    };
+    let jump = Animation {
+        sprite: Sprite {
+            spritesheet : spritesheet.clone(),
+            offset      : Vec2::new(0, 0),
+            frame_width : fw,
+            frame_height: fh,
+            num_frames_x: 1,
+            num_frames_y: 1,
+        },
+        repeat: true,
+        frame_time: 0.6
+    };
+    let fall = Animation {
+        sprite: Sprite {
+            spritesheet : spritesheet.clone(),
+            offset      : Vec2::new(0, 0),
+            frame_width : fw,
+            frame_height: fh,
+            num_frames_x: 1,
+            num_frames_y: 1,
+        },
+        repeat: true,
+        frame_time: 0.5
+    };
+
+    RandomWalker::new(
+        Creature::new(
+            position,
+            Rect::new(2.0, 2.0, 38.0, 30.0),
+            Rect::new(0.0, 0.0, 32.0, 32.0),
+            PhysicalProperties {
+                c_drag        : 0.470,
+                mass          : 70.00, // (kg)
+                acting_area   : 0.760, // (m^2)
+                movement_accel: 6.000,
+                max_velocity  : 4.000, // (m/s)
+                jump_accel    : 5.000, // (m/s)
+                jump_time     : 0.000, // (secs)
+                stopping_bonus: 6.000,
+            },
+            CreatureAnimations {
+                idle: idle,
+                walk: walk,
+                jump: jump,
+                fall: fall,
+            }
+        ))
 }

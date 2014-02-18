@@ -2,3 +2,7 @@
 MoikMellah
     tiles.png  - http://opengameart.org/content/4-color-dungeon-bricks-16x16
     player.png - http://opengameart.org/content/mv-platformer-male-32x64
+
+
+Shepardskin
+    cat.png    - http://opengameart.org/content/cat-sprites
