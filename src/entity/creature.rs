@@ -1,8 +1,7 @@
 use std::num::abs;
 
 use game::entity;
-use game::entity::Entity;
-use game::entity::PhysicalProperties;
+use game::entity::{Physics, Object, PhysicalProperties, GRAVITY};
 use game::map::Map;
 use game::sprite::{Animation, AnimationPlayer};
 
@@ -19,6 +18,8 @@ pub struct Creature {
     base_hitbox: Rect,
     on_ground  : bool,
     properties : PhysicalProperties,
+    move_accel : f32,
+    jump_accel : f32,
     animations : CreatureAnimations,
     animation_player: AnimationPlayer
 }
@@ -30,23 +31,20 @@ pub struct CreatureAnimations {
     fall: Animation,
 }
 
-impl Entity for Creature {
+impl Physics for Creature {
     fn acceleration(&self) -> Vec2<f32> { self.accel }
     fn set_acceleration(&mut self, new_accel: Vec2<f32>) { self.accel = new_accel; }
     fn velocity(&self) -> Vec2<f32> { self.vel }
     fn set_velocity(&mut self, new_vel: Vec2<f32>) { self.vel = new_vel; }
     fn position(&self) -> Vec2<f32> { self.pos }
     fn set_position(&mut self, new_pos: Vec2<f32>) { self.pos = new_pos }
-    fn physical_properties<'a>(&'a self) -> &'a PhysicalProperties { &self.properties }
     fn bounds(&self) -> Rect { self.base_bounds.move_vec(self.pos) }
     fn is_on_ground(&self) -> bool { self.on_ground }
-    fn hit_y(&mut self, value: bool) { self.on_ground = value }
+    fn set_on_ground(&mut self, value: bool) { self.on_ground = value }
+    fn get_properties(&self) -> PhysicalProperties { self.properties }
+}
 
-    fn center(&self) -> Vec2<i32> {
-        let actual_center = self.bounds().center();
-        Vec2::new(actual_center.x as i32, actual_center.y as i32)
-    }
-
+impl Object for Creature {
     fn update(&mut self, map: &Map, secs: f32) {
         entity::physics(self, map, secs);
 
@@ -92,19 +90,26 @@ impl Entity for Creature {
 
 impl Creature {
     pub fn new(position: Vec2<f32>, base_bounds: Rect, base_hitbox: Rect,
-               properties: PhysicalProperties, animations: CreatureAnimations)
-               -> Creature {
+               properties: PhysicalProperties, move_accel: f32, jump_accel: f32,
+               animations: CreatureAnimations) -> Creature {
         Creature {
-            accel: Vec2::new(0.0, 9.8),
+            accel: Vec2::new(0.0, GRAVITY),
             vel: Vec2::zero(),
             pos: position,
             base_bounds: base_bounds,
             base_hitbox: base_hitbox,
             on_ground: false,
             properties: properties,
+            move_accel: move_accel,
+            jump_accel: jump_accel,
             animation_player: AnimationPlayer::new(animations.idle.clone()),
             animations: animations,
         }
+    }
+
+    pub fn center(&self) -> Vec2<i32> {
+        let actual_center = self.bounds().center();
+        Vec2::new(actual_center.x as i32, actual_center.y as i32)
     }
 
     #[cfg(debug)]

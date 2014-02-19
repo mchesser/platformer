@@ -51,7 +51,7 @@ fn main() {
 
     // Initialise timer
     let mut timer = Timer::new();
-    let mut log_timer = Timer::new();
+    // let mut log_timer = Timer::new();
 
     'main: loop {
         let secs = timer.elapsed_seconds();
@@ -81,15 +81,9 @@ fn main() {
         // Refresh the screen
         renderer.present();
 
-        // Print some information about the game
-        if log_timer.elapsed_seconds() > 1.0 {
+        // Uncomment to used for logging
+        /*if log_timer.elapsed_seconds() > 1.0 {
             log_timer.reset();
-            println!("PLAYER: velocity {}, position {}, on_ground: {:?}",
-                game.player.entity.vel.to_str(),
-                game.player.entity.pos.to_str(),
-                game.player.entity.on_ground
-            );
-            println!("");
-        }
+        }*/
     }
 }

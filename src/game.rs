@@ -9,12 +9,10 @@ use sdl2_image::LoadTexture;
 
 use gmath::vectors::Vec2;
 use gmath::shapes::Rect;
-use game::entity::{Entity, PhysicalProperties};
+use game::entity::{Entity, Object, PhysicalProperties};
 use game::entity::creature::{Creature, CreatureAnimations};
 use game::sprite::{Sprite, Animation};
-use game::controller::Controller;
-use game::controller::player::Player;
-use game::controller::ai::RandomWalker;
+use game::controller::{Controller, KeyboardController, RandomController};
 use game::map::Map;
 use game::tiles::{TileSet, TileInfo};
 use keyboard::KeyboardState;
@@ -28,8 +26,8 @@ mod sprite;
 pub struct Game {
     map: Map,
     tileset: Rc<TileSet>,
-    player: Player<Creature>,
-    cat: RandomWalker,
+    player: Entity<Creature, KeyboardController>,
+    cat: Entity<Creature, RandomController>,
     camera: Vec2<i32>,
     background: ~Texture,
 }
@@ -119,19 +117,19 @@ impl Game {
         // Center the camera on the player:
         let draw_rect = renderer.get_viewport();
 
-        self.camera = self.player.entity.center()
+        self.camera = self.player.object.center()
                 - Vec2::new((draw_rect.w as f32 / 2.0) as i32, (draw_rect.h as f32 / 2.0) as i32);
         self.camera.x = clamp(self.camera.x, 0, self.map.pixel_width() - draw_rect.w);
         self.camera.y = clamp(self.camera.y, 0, self.map.pixel_height() - draw_rect.h);
 
         self.map.draw(self.camera, renderer);
-        self.player.entity.draw(self.camera, renderer);
-        self.cat.entity.draw(self.camera, renderer);
+        self.player.draw(self.camera, renderer);
+        self.cat.draw(self.camera, renderer);
     }
 }
 
 fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
-        spritesheet: Rc<~Texture>) -> Player<Creature> {
+        spritesheet: Rc<~Texture>) -> Entity<Creature, KeyboardController> {
     let fw = 64;
     let fh = 128;
     let idle = Animation {
@@ -183,21 +181,20 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
         frame_time: 0.5
     };
 
-    Player {
-        entity: Creature::new(
+    Entity {
+        object: Creature::new(
             position,
             Rect::new(14.0, 36.0, 32.0, 92.0),
             Rect::new(0.0, 0.0, 32.0, 32.0),
             PhysicalProperties {
-                c_drag        : 0.470,
-                mass          : 70.00, // (kg)
-                acting_area   : 0.760, // (m^2)
-                movement_accel: 6.000,
-                max_velocity  : 9.000, // (m/s)
-                jump_accel    : 5.000, // (m/s)
-                jump_time     : 0.000, // (secs)
-                stopping_bonus: 6.000,
+                c_drag    : 0.470,
+                mass      : 70.00, // (kg)
+                cross_area: 0.760, // (m^2)
+                max_vel_x : 9.000, // (m/s)
+                stop_bonus: 6.000,
             },
+            6.0,
+            5.0,
             CreatureAnimations {
                 idle: idle,
                 walk: walk,
@@ -205,11 +202,12 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
                 fall: fall,
             }
         ),
-        keyboard: keyboard
+        controller: KeyboardController::new(keyboard)
     }
 }
 
-fn create_cat(position: Vec2<f32>, spritesheet: Rc<~Texture>) -> RandomWalker {
+fn create_cat(position: Vec2<f32>,
+        spritesheet: Rc<~Texture>) -> Entity<Creature, RandomController> {
     let fw = 40;
     let fh = 32;
     let idle = Animation {
@@ -261,26 +259,27 @@ fn create_cat(position: Vec2<f32>, spritesheet: Rc<~Texture>) -> RandomWalker {
         frame_time: 0.5
     };
 
-    RandomWalker::new(
-        Creature::new(
+    Entity {
+        object: Creature::new(
             position,
             Rect::new(2.0, 2.0, 38.0, 30.0),
             Rect::new(0.0, 0.0, 32.0, 32.0),
             PhysicalProperties {
-                c_drag        : 0.470,
-                mass          : 70.00, // (kg)
-                acting_area   : 0.760, // (m^2)
-                movement_accel: 6.000,
-                max_velocity  : 4.000, // (m/s)
-                jump_accel    : 5.000, // (m/s)
-                jump_time     : 0.000, // (secs)
-                stopping_bonus: 6.000,
+                c_drag    : 0.470,
+                mass      : 70.00, // (kg)
+                cross_area: 0.760, // (m^2)
+                max_vel_x : 4.000, // (m/s)
+                stop_bonus: 6.000,
             },
+            6.0,
+            5.0,
             CreatureAnimations {
                 idle: idle,
                 walk: walk,
                 jump: jump,
                 fall: fall,
             }
-        ))
+        ),
+        controller: RandomController::new(0.5)
+    }
 }
