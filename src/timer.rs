@@ -1,14 +1,14 @@
 use sdl2::timer;
 
 pub struct Timer {
-    priv last: u64
+    priv last: u64,
 }
 
 impl Timer {
     /// Creates a new timer with the time set to the current time
     pub fn new() -> Timer {
         Timer {
-            last: timer::get_performance_counter()
+            last: timer::get_performance_counter(),
         }
     }
 

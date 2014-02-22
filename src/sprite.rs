@@ -36,7 +36,7 @@ impl Sprite {
 pub struct Animation {
     sprite: Sprite,
     frame_time: f32,
-    repeat: bool
+    repeat: bool,
 }
 
 pub struct AnimationPlayer {
@@ -45,7 +45,7 @@ pub struct AnimationPlayer {
     speed_up: f32,
     wait_time: f32,
     stopped: bool,
-    flip_state: RendererFlip
+    flip_state: RendererFlip,
 }
 
 impl AnimationPlayer {
@@ -56,7 +56,7 @@ impl AnimationPlayer {
             speed_up: 1.0,
             wait_time: 0.0,
             stopped: false,
-            flip_state: FlipNone
+            flip_state: FlipNone,
         }
     }
 

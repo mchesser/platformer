@@ -129,7 +129,7 @@ pub struct PhysicalProperties {
     // The maximum horizontal velocity of the object (m/s)
     max_vel_x: f32,
     // A friction modifier used for extra control on getting the object to stop
-    stop_bonus: f32
+    stop_bonus: f32,
 }
 
 

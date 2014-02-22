@@ -112,7 +112,7 @@ impl Game {
             font: font,
             tileset: tileset,
             camera: Vec2::zero(),
-            background: background
+            background: background,
         }
     }
 
@@ -159,7 +159,7 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
             num_frames_y: 1,
         },
         repeat: true,
-        frame_time: 0.0
+        frame_time: 0.0,
     };
     let walk = Animation {
         sprite: Sprite {
@@ -171,7 +171,7 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
             num_frames_y: 1,
         },
         repeat: true,
-        frame_time: 0.7
+        frame_time: 0.7,
     };
     let jump = Animation {
         sprite: Sprite {
@@ -183,7 +183,7 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
             num_frames_y: 1,
         },
         repeat: true,
-        frame_time: 0.6
+        frame_time: 0.6,
     };
     let fall = Animation {
         sprite: Sprite {
@@ -195,7 +195,7 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
             num_frames_y: 1,
         },
         repeat: true,
-        frame_time: 0.5
+        frame_time: 0.5,
     };
 
     Entity {
@@ -219,7 +219,7 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
                 fall: fall,
             }
         ),
-        controller: KeyboardController::new(keyboard)
+        controller: KeyboardController::new(keyboard),
     }
 }
 
@@ -237,7 +237,7 @@ fn create_cat(position: Vec2<f32>,
             num_frames_y: 1,
         },
         repeat: true,
-        frame_time: 0.0
+        frame_time: 0.0,
     };
     let walk = Animation {
         sprite: Sprite {
@@ -249,7 +249,7 @@ fn create_cat(position: Vec2<f32>,
             num_frames_y: 1,
         },
         repeat: true,
-        frame_time: 0.7
+        frame_time: 0.7,
     };
     let jump = Animation {
         sprite: Sprite {
@@ -261,7 +261,7 @@ fn create_cat(position: Vec2<f32>,
             num_frames_y: 1,
         },
         repeat: true,
-        frame_time: 0.6
+        frame_time: 0.6,
     };
     let fall = Animation {
         sprite: Sprite {
@@ -273,7 +273,7 @@ fn create_cat(position: Vec2<f32>,
             num_frames_y: 1,
         },
         repeat: true,
-        frame_time: 0.5
+        frame_time: 0.5,
     };
 
     Entity {
@@ -297,6 +297,6 @@ fn create_cat(position: Vec2<f32>,
                 fall: fall,
             }
         ),
-        controller: RandomController::new(0.5)
+        controller: RandomController::new(0.5),
     }
 }

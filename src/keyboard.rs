@@ -7,14 +7,14 @@ use sdl2::scancode::ScanCode;
 
 pub struct KeyboardState {
     priv last: ~HashMap<ScanCode, bool>,
-    priv current: ~HashMap<ScanCode, bool>
+    priv current: ~HashMap<ScanCode, bool>,
 }
 
 impl KeyboardState {
     pub fn new() -> KeyboardState {
         KeyboardState {
             last: sdl2::keyboard::get_keyboard_state(),
-            current: sdl2::keyboard::get_keyboard_state()
+            current: sdl2::keyboard::get_keyboard_state(),
         }
     }
 

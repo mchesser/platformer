@@ -4,13 +4,13 @@ use sdl2::rect::Rect;
 
 pub struct TileInfo {
     solid: bool,
-    friction: f32
+    friction: f32,
 }
 
 pub struct TileSet {
     tile_size: i32,
     sprite: ~Texture,
-    tile_info: ~[TileInfo]
+    tile_info: ~[TileInfo],
 }
 
 impl TileSet {

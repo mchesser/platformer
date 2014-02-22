@@ -21,7 +21,7 @@ pub struct Creature {
     move_accel : f32,
     jump_accel : f32,
     animations : CreatureAnimations,
-    animation_player: AnimationPlayer
+    animation_player: AnimationPlayer,
 }
 
 pub struct CreatureAnimations {

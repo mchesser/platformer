@@ -16,7 +16,7 @@ pub trait Controller<A> {
 
 /// A controller that controls objects using the keyboard
 pub struct KeyboardController {
-    keyboard: Rc<RefCell<KeyboardState>>
+    keyboard: Rc<RefCell<KeyboardState>>,
 }
 
 impl KeyboardController {

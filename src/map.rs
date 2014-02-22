@@ -12,7 +12,7 @@ pub struct Map {
     priv tiles: ~[u16],
     priv width_: uint,
     priv height_: uint,
-    priv tileset: Rc<TileSet>
+    priv tileset: Rc<TileSet>,
 }
 
 impl Map {
@@ -73,7 +73,7 @@ impl Map {
             tiles: tiles,
             width_: width,
             height_: height,
-            tileset: tileset
+            tileset: tileset,
         }
     }
 
