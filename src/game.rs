@@ -12,6 +12,7 @@ use gmath::shapes::Rect;
 use game::entity::{Entity, Object, PhysicalProperties};
 use game::entity::creature::{Creature, CreatureAnimations};
 use game::sprite::{Sprite, Animation};
+use game::bitfont::BitFont;
 use game::controller::{Controller, KeyboardController, RandomController};
 use game::map::Map;
 use game::tiles::{TileSet, TileInfo};
@@ -22,12 +23,14 @@ mod tiles;
 mod entity;
 mod controller;
 mod sprite;
+mod bitfont;
 
 pub struct Game {
     map: Map,
     tileset: Rc<TileSet>,
     player: Entity<Creature, KeyboardController>,
     cat: Entity<Creature, RandomController>,
+    font: BitFont,
     camera: Vec2<i32>,
     background: ~Texture,
 }
@@ -82,23 +85,31 @@ impl Game {
         let map = Map::load_map(&mut File::open(&Path::new("./assets/maps/map1"))
                 .ok().expect("Failed to load map"), tileset.clone());
 
-        // Load human sprite
-        let human_spritesheet = Rc::new(renderer.load_texture(&Path::new("./assets/player.png"))
+        // Load human spritesheet
+        let human_spritesheet = Rc::new(
+                renderer.load_texture(&Path::new("./assets/creatures/player.png"))
                 .ok().expect("Failed to load human sprite"));
         // Load cat spritesheet
-        let cat_spritesheet = Rc::new(renderer.load_texture(&Path::new("./assets/cat.png"))
+        let cat_spritesheet = Rc::new(
+                renderer.load_texture(&Path::new("./assets/creatures/cat.png"))
                 .ok().expect("Failed to load cat sprite"));
-
         let player = create_player(Vec2::new(50.0, 50.0), keyboard, human_spritesheet.clone());
         let cat = create_cat(Vec2::new(400.0, 50.0), cat_spritesheet.clone());
 
         let background = renderer.load_texture(&Path::new("./assets/background.png"))
                 .ok().expect("Failed to load background image");
 
+        // Load font spritesheet
+        let font_spritesheet = Rc::new(
+                renderer.load_texture(&Path::new("./assets/fonts/Victoria.png"))
+                .ok().expect("Failed to load font"));
+        let font = BitFont::new(32, 96, 8, 9, font_spritesheet.clone());
+
         Game {
             map: map,
             player: player,
             cat: cat,
+            font: font,
             tileset: tileset,
             camera: Vec2::zero(),
             background: background
@@ -125,6 +136,12 @@ impl Game {
         self.map.draw(self.camera, renderer);
         self.player.draw(self.camera, renderer);
         self.cat.draw(self.camera, renderer);
+
+        static test_string: &'static str =
+r#"Test string,
+with multiple lines."#;
+
+        self.font.draw_text(Vec2::new(0, 0), test_string, renderer);
     }
 }
 
