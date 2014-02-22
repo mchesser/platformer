@@ -36,15 +36,16 @@ impl Physics for Creature {
     fn set_acceleration(&mut self, new_accel: Vec2<f32>) { self.accel = new_accel; }
     fn velocity(&self) -> Vec2<f32> { self.vel }
     fn set_velocity(&mut self, new_vel: Vec2<f32>) { self.vel = new_vel; }
-    fn position(&self) -> Vec2<f32> { self.pos }
-    fn set_position(&mut self, new_pos: Vec2<f32>) { self.pos = new_pos }
-    fn bounds(&self) -> Rect { self.base_bounds.move_vec(self.pos) }
     fn is_on_ground(&self) -> bool { self.on_ground }
     fn set_on_ground(&mut self, value: bool) { self.on_ground = value }
     fn get_properties(&self) -> PhysicalProperties { self.properties }
 }
 
 impl Object for Creature {
+    fn position(&self) -> Vec2<f32> { self.pos }
+    fn set_position(&mut self, new_pos: Vec2<f32>) { self.pos = new_pos }
+    fn bounds(&self) -> Rect { self.base_bounds.move_vec(self.pos) }
+
     fn update(&mut self, map: &Map, secs: f32) {
         entity::physics(self, map, secs);
 

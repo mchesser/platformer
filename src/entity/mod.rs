@@ -20,21 +20,36 @@ pub struct Entity<A, B> {
     controller: B,
 }
 
-impl<A: Object, B: Controller<A>> Object for Entity<A, B> {
-    fn update(&mut self, map: &Map, secs: f32) {
+impl<A: Object, B: Controller<A>> Entity<A, B> {
+    pub fn update(&mut self, map: &Map, secs: f32) {
         // Update the controller
         self.controller.update(&mut self.object, secs);
         // Update the object
         self.object.update(map, secs);
     }
 
-    fn draw(&self, camera: Vec2<i32>, renderer: &Renderer) {
+    pub fn draw(&self, camera: Vec2<i32>, renderer: &Renderer) {
         self.object.draw(camera, renderer);
     }
 }
 
 /// Objects are things that can be drawn to the screen
 pub trait Object {
+    /// Gets the object's position
+    /// # Return
+    /// Returns the position of the object as a vector
+    fn position(&self) -> Vec2<f32>;
+
+    /// Sets the object's position
+    /// # Arguments
+    /// `new_pos` - The position to set
+    fn set_position(&mut self, new_pos: Vec2<f32>);
+
+    /// Gets the object's bounds
+    /// # Return
+    /// Returns a rectangle representing the objects physical bounds
+    fn bounds(&self) -> Rect;
+
     /// Updates the object
     /// # Arguments
     /// `map` - The map where the object is currently
@@ -51,7 +66,7 @@ pub trait Object {
 /// Defines objects that physics can be applied on. Note that default implementations are provided
 /// for setting and getting acceleration for convenience as acceleration is not modified by the
 /// physics of the game.
-pub trait Physics {
+pub trait Physics: Object {
     /// Gets the object's acceleration
     /// # Return
     /// Returns the acceleration of the object as a vector
@@ -76,21 +91,6 @@ pub trait Physics {
     /// # Arguments
     /// `new_vel` - The velocity to set
     fn set_velocity(&mut self, new_vel: Vec2<f32>);
-
-    /// Gets the object's position
-    /// # Return
-    /// Returns the position of the object as a vector
-    fn position(&self) -> Vec2<f32>;
-
-    /// Sets the object's position
-    /// # Arguments
-    /// `new_pos` - The position to set
-    fn set_position(&mut self, new_pos: Vec2<f32>);
-
-    /// Gets the object's bounds
-    /// # Return
-    /// Returns a rectangle representing the objects physical bounds
-    fn bounds(&self) -> Rect;
 
     /// Checks if the object is on the ground
     /// # Return
