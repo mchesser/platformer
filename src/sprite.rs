@@ -7,12 +7,12 @@ use gmath::vectors::Vec2;
 
 #[deriving(Clone, Eq)]
 pub struct Sprite {
-    spritesheet: Rc<~Texture>,
-    offset: Vec2<i32>,
-    frame_width: i32,
-    frame_height: i32,
-    num_frames_x: i32,
-    num_frames_y: i32,
+    pub spritesheet: Rc<Texture>,
+    pub offset: Vec2<i32>,
+    pub frame_width: i32,
+    pub frame_height: i32,
+    pub num_frames_x: i32,
+    pub num_frames_y: i32,
 }
 
 impl Sprite {
@@ -27,22 +27,22 @@ impl Sprite {
                 self.frame_height);
         let dest = Rect::new(pos.x, pos.y, self.frame_width, self.frame_height);
 
-        renderer.copy_ex(*self.spritesheet.borrow(), Some(source), Some(dest),
+        renderer.copy_ex(self.spritesheet.deref(), Some(source), Some(dest),
             0.0, None, flip_state);
     }
 }
 
 #[deriving(Clone, Eq)]
 pub struct Animation {
-    sprite: Sprite,
-    frame_time: f32,
-    repeat: bool,
+    pub sprite: Sprite,
+    pub frame_time: f32,
+    pub repeat: bool,
 }
 
 pub struct AnimationPlayer {
     animation: Animation,
     frame: Vec2<i32>,
-    speed_up: f32,
+    pub speed_up: f32,
     wait_time: f32,
     stopped: bool,
     flip_state: RendererFlip,

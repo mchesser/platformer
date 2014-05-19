@@ -11,24 +11,24 @@ use gmath::shapes::Rect;
 use sdl2::render::Renderer;
 
 pub struct Creature {
-    accel      : Vec2<f32>,
-    vel        : Vec2<f32>,
-    pos        : Vec2<f32>,
-    base_bounds: Rect,
-    base_hitbox: Rect,
-    on_ground  : bool,
-    properties : PhysicalProperties,
-    move_accel : f32,
-    jump_accel : f32,
-    animations : CreatureAnimations,
-    animation_player: AnimationPlayer,
+    pub accel      : Vec2<f32>,
+    pub vel        : Vec2<f32>,
+    pub pos        : Vec2<f32>,
+    pub base_bounds: Rect,
+    pub base_hitbox: Rect,
+    pub on_ground  : bool,
+    pub properties : PhysicalProperties,
+    pub move_accel : f32,
+    pub jump_accel : f32,
+    pub animations : CreatureAnimations,
+    pub animation_player: AnimationPlayer,
 }
 
 pub struct CreatureAnimations {
-    idle: Animation,
-    walk: Animation,
-    jump: Animation,
-    fall: Animation,
+    pub idle: Animation,
+    pub walk: Animation,
+    pub jump: Animation,
+    pub fall: Animation,
 }
 
 impl Physics for Creature {

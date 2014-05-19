@@ -1,22 +1,22 @@
-#[allow(dead_code)];
+#![allow(dead_code)]
 
 use gmath::vectors::Vec2;
-use std::num::{min, max};
+//use std::num::{min, max};
 
 /// Circle structure, with center and radius
 #[deriving(Clone)]
 pub struct Circle {
-    center: Vec2<f32>,
-    radius: f32,
+    pub center: Vec2<f32>,
+    pub radius: f32,
 }
 
 /// Rectangle structure
 #[deriving(Clone)]
 pub struct Rect {
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
 }
 
 impl Rect {
@@ -41,7 +41,7 @@ impl Rect {
     /// # Return
     /// The top right coordinate of the rectangle
     pub fn top_right(&self) -> Vec2<f32> {
-        Vec2::  new(self.x + self.width, self.y)
+        Vec2::new(self.x + self.width, self.y)
     }
 
     /// Gets the bottom left coordinate of the rectangle
@@ -113,8 +113,8 @@ impl Rect {
     /// # Return
     /// The intersection area
     pub fn intersect_area(&self, other: &Rect) -> f32 {
-        let x_intersect = min(self.right(), other.right()) - max(self.left(), other.left());
-        let y_intersect = min(self.bottom(), other.bottom()) - max(self.top(), other.top());
+        let x_intersect = self.right().min(other.right()) - self.left().min(other.left());
+        let y_intersect = self.bottom().min(other.bottom()) - self.top().max(other.top());
 
         if x_intersect < 0.0 || y_intersect < 0.0 {
             0.0

@@ -1,4 +1,3 @@
-use std::vec;
 use std::rc::Rc;
 use std::io::{File, BufReader, MemReader};
 
@@ -9,10 +8,10 @@ use gmath::vectors::Vec2;
 use game::tiles::{TileSet, TileInfo};
 
 pub struct Map {
-    priv tiles: ~[u16],
-    priv width_: uint,
-    priv height_: uint,
-    priv tileset: Rc<TileSet>,
+    tiles: Vec<u16>,
+    width_: uint,
+    height_: uint,
+    tileset: Rc<TileSet>,
 }
 
 impl Map {
@@ -53,8 +52,8 @@ impl Map {
         };
 
         // Read the tiles
-        let mut tile_buffer: ~[u8] = vec::from_elem(width * height * 2, 0u8);
-        match file.read(tile_buffer) {
+        let mut tile_buffer = Vec::from_elem(width * height * 2, 0u8);
+        match file.read(tile_buffer.as_mut_slice()) {
             Ok(n) if n == width * height * 2 => {},
             Ok(n) => fail!("Invalid number of tiles, expected: {}, but found: {}",
                            width*height*2, n),
@@ -62,7 +61,7 @@ impl Map {
         }
 
         let mut reader = MemReader::new(tile_buffer);
-        let tiles = vec::from_fn(width * height, |_| {
+        let tiles = Vec::from_fn(width * height, |_| {
             match reader.read_le_u16() {
                 Ok(x) => x,
                 Err(err) => fail!("Failed to read map: {}", err.desc)
@@ -94,17 +93,17 @@ impl Map {
     }
 
     pub fn tile_size(&self) -> i32 {
-        self.tileset.borrow().tile_size
+        self.tileset.tile_size
     }
 
     pub fn tile_info_at(&self, x: uint, y: uint) -> TileInfo {
-        self.tileset.borrow().id(self.get(x, y))
+        self.tileset.id(self.get(x, y))
     }
 
     fn get(&self, x: uint, y: uint) -> u16 {
         assert!(x < self.width());
         assert!(y < self.height());
-        self.tiles[x + y * self.width()]
+        *self.tiles.get(x + y * self.width())
     }
 
     pub fn draw(&self, camera: Vec2<i32>, renderer: &render::Renderer) {
@@ -114,7 +113,7 @@ impl Map {
                 let y = (tile_y * self.tile_size() as uint) as i32;
                 let dest_rect = Rect::new(x - camera.x, y - camera.y,
                         self.tile_size() as i32, self.tile_size() as i32);
-                self.tileset.borrow().draw(self.get(tile_x, tile_y), dest_rect, renderer);
+                self.tileset.draw(self.get(tile_x, tile_y), dest_rect, renderer);
             }
         }
     }

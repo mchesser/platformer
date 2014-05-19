@@ -1,7 +1,7 @@
 use sdl2::timer;
 
 pub struct Timer {
-    priv last: u64,
+    last: u64,
 }
 
 impl Timer {

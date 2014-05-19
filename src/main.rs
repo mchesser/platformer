@@ -1,6 +1,8 @@
-extern mod sdl2;
-extern mod sdl2_image;
-extern mod native;
+extern crate sdl2;
+extern crate sdl2_image;
+extern crate native;
+extern crate rand;
+extern crate collections;
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -28,35 +30,36 @@ fn main() {
     static WHITE: sdl2::pixels::Color = sdl2::pixels::RGB(0xFF, 0xFF, 0xFF);
 
     // Initialise SDL
-    sdl2::init([sdl2::InitVideo]);
+    sdl2::init(sdl2::InitVideo);
 
     // Initialise the window
     let window =
         match video::Window::new("Platformer Game", video::PosCentered, video::PosCentered,
-                WIN_WIDTH, WIN_HEIGHT, [video::OpenGL]) {
+                WIN_WIDTH, WIN_HEIGHT, video::OpenGL) {
             Ok(window) => window,
             Err(err) => fail!(format!("failed to create window: {}", err))
     };
 
     // Initialise the renderer
     let renderer =
-        match render::Renderer::from_window(window, render::DriverAuto, [render::Accelerated]) {
+        match render::Renderer::from_window(window, render::DriverAuto, render::Accelerated) {
             Ok(renderer) => renderer,
             Err(err) => fail!(format!("failed to create renderer: {}", err))
     };
 
     // Initialise the game
     let keyboard = Rc::new(RefCell::new(KeyboardState::new()));
-    let mut game = game::Game::new(keyboard.clone(), renderer);
+    let mut game = game::Game::new(keyboard.clone(), &renderer);
 
     // Initialise timer
     let mut timer = Timer::new();
-    // let mut log_timer = Timer::new();
+    let mut log_timer = Timer::new();
+    let mut frames = 0;
 
     'main: loop {
         let secs = timer.elapsed_seconds();
         timer.reset();
-        keyboard.borrow().with_mut(|k| k.update());
+        keyboard.borrow_mut().update();
 
         'event: loop {
             match event::poll_event() {
@@ -76,14 +79,16 @@ fn main() {
         renderer.set_draw_color(WHITE);
         renderer.clear();
 
-        game.draw(renderer);
+        game.draw(&renderer);
 
         // Refresh the screen
         renderer.present();
 
-        // Uncomment to used for logging
-        /*if log_timer.elapsed_seconds() > 1.0 {
+        frames += 1;
+        if log_timer.elapsed_seconds() > 1.0 {
             log_timer.reset();
-        }*/
+            println!("FPS: {}", frames);
+            frames = 0;
+        }
     }
 }

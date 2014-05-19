@@ -1,13 +1,13 @@
-#[allow(dead_code)];
+#![allow(dead_code)]
 
 use std::fmt;
-use std::num::{zero, one, sqrt, sin_cos, atan2};
+use std::num::{zero, one, FloatMath};
 
 /// A 2-dimensional vector.
 #[deriving(Eq, Clone)]
 pub struct Vec2<T> {
-    x: T,
-    y: T
+    pub x: T,
+    pub y: T
 }
 
 impl<T> Vec2<T> {
@@ -69,7 +69,7 @@ impl<T: Primitive + Clone> Sub<Vec2<T>, Vec2<T>> for Vec2<T> {
 }
 
 
-impl<T: Float> Vec2<T> {
+impl<T: Float + FloatMath> Vec2<T> {
     /// Create a new vector from polar coordinates
     /// # Arguments
     /// `angle` - the angle of the vector
@@ -77,7 +77,7 @@ impl<T: Float> Vec2<T> {
     /// # Return
     /// The new vector
     pub fn from_polar(angle: T, mag: T) -> Vec2<T> {
-        let (sin_a, cos_a) = sin_cos(angle);
+        let (sin_a, cos_a) = angle.sin_cos();
         Vec2::new(mag * cos_a, mag * sin_a)
     }
 
@@ -92,7 +92,7 @@ impl<T: Float> Vec2<T> {
     /// # Return
     /// The length of the vector
     pub fn length(&self) -> T {
-        sqrt(self.length_sqr())
+        self.length_sqr().sqrt()
     }
 
     /// Normalises the vector
@@ -114,7 +114,7 @@ impl<T: Float> Vec2<T> {
     /// # Arguments
     /// `angle` - the angle to rotate by
     pub fn rotate(&mut self, angle: T) {
-        let (cos_a, sin_a) = sin_cos(angle);
+        let (cos_a, sin_a) = angle.sin_cos();
         let (old_x, old_y) = (self.x.clone(), self.y.clone());
         self.x = old_x*cos_a - old_y*sin_a;
         self.y = old_x*sin_a + old_y*cos_a;
@@ -124,7 +124,7 @@ impl<T: Float> Vec2<T> {
     /// # Return
     /// The angle of the vector
     pub fn angle(&self) -> T {
-        atan2(self.x.clone(), self.y.clone())
+        self.x.clone().atan2(self.y.clone())
     }
 }
 
@@ -139,6 +139,7 @@ impl<T: Mul<T, T>> Vec2<T> {
     }
 }
 
+/*
 impl<T: fmt::Show> ToStr for Vec2<T> {
     /// Provides a string representation of the vector
     /// # Return
@@ -146,4 +147,4 @@ impl<T: fmt::Show> ToStr for Vec2<T> {
     fn to_str(&self) -> ~str {
         format!("[{}, {}]", self.x, self.y)
     }
-}
+}*/

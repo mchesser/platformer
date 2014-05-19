@@ -1,18 +1,37 @@
-use std::rand;
-use std::rand::Rng;
-use std::rand::XorShiftRng;
 use std::rc::Rc;
 use std::cell::RefCell;
 
+use rand;
+use rand::XorShiftRng;
+use rand::Rng;
+
 use gmath::vectors::Vec2;
-use game::entity::Physics;
+use game::entity::{Object, Physics};
 use game::entity::creature::Creature;
 use keyboard::KeyboardState;
 use sdl2::keycode;
 
 pub trait Controller<A> {
-    fn update(&mut self, object: &mut A, secs: f32);
+    /// Update the controller
+    /// # Arguments
+    /// `object` - The object to control
+    /// `secs` - The time elapsed sinced last update
+    fn update(&mut self, _object: &mut A, _secs: f32) {
+    }
 }
+
+pub struct NoneController<A>;
+
+impl<A: Object> NoneController<A> {
+    pub fn new() -> NoneController<A> {
+        NoneController
+    }
+}
+
+impl<A: Object> Controller<A> for NoneController<A> {
+    // Just use default trait implementations
+}
+
 
 /// A controller that controls objects using the keyboard
 pub struct KeyboardController {
@@ -28,15 +47,15 @@ impl KeyboardController {
 }
 
 impl Controller<Creature> for KeyboardController {
-    fn update(&mut self, object: &mut Creature, _secs: f32) {
-        let keyboard = self.keyboard.borrow().borrow();
+    fn update(&mut self, object: &mut Creature, _: f32) {
+        let keyboard = self.keyboard.borrow();
 
         let move_accel = object.move_accel;
         let x_accel =
-            if keyboard.get().is_keydown(keycode::LeftKey) {
+            if keyboard.is_keydown(keycode::LeftKey) {
                 -move_accel * if object.is_on_ground() { 1.0 } else { 0.6 }
             }
-            else if keyboard.get().is_keydown(keycode::RightKey) {
+            else if keyboard.is_keydown(keycode::RightKey) {
                 move_accel * if object.is_on_ground() { 1.0 } else { 0.6 }
             }
             else {
@@ -46,7 +65,7 @@ impl Controller<Creature> for KeyboardController {
         object.set_acceleration(new_accel);
 
         let jump_accel = object.jump_accel;
-        if object.is_on_ground() && keyboard.get().is_new_keypress(keycode::UpKey) {
+        if object.is_on_ground() && keyboard.is_keydown(keycode::UpKey) {
             let new_velocity = object.velocity() + Vec2::new(0.0, -jump_accel);
             object.set_velocity(new_velocity);
         }

@@ -21,7 +21,7 @@ impl BitFont {
     /// # Return
     /// A bit font using the texture specified
     pub fn new(ascii_offset: u8, num_chars: i32, char_width: i32, char_height: i32,
-            texture: Rc<~Texture>) -> BitFont {
+            texture: Rc<Texture>) -> BitFont {
         BitFont {
             ascii_offset: ascii_offset,
             sprite: Sprite {

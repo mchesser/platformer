@@ -1,6 +1,5 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::num::clamp;
 use std::io::File;
 
 use sdl2::render::Renderer;
@@ -11,9 +10,10 @@ use gmath::vectors::Vec2;
 use gmath::shapes::Rect;
 use game::entity::{Entity, Object, PhysicalProperties};
 use game::entity::creature::{Creature, CreatureAnimations};
+use game::entity::blocks::DamageBlock;
 use game::sprite::{Sprite, Animation};
 use game::bitfont::BitFont;
-use game::controller::{Controller, KeyboardController, RandomController};
+use game::controller::{Controller, NoneController, KeyboardController, RandomController};
 use game::map::Map;
 use game::tiles::{TileSet, TileInfo};
 use keyboard::KeyboardState;
@@ -25,19 +25,32 @@ mod controller;
 mod sprite;
 mod bitfont;
 
+fn clamp(value: i32, min: i32, max: i32) -> i32 {
+    if value < min {
+        min
+    }
+    else if value > max {
+        max
+    }
+    else {
+        value
+    }
+}
+
 pub struct Game {
     map: Map,
     tileset: Rc<TileSet>,
     player: Entity<Creature, KeyboardController>,
     cat: Entity<Creature, RandomController>,
+    lava: Vec<Entity<DamageBlock, NoneController<DamageBlock>>>,
     font: BitFont,
     camera: Vec2<i32>,
-    background: ~Texture,
+    background: Box<Texture>,
 }
 
 impl Game {
     pub fn new(keyboard: Rc<RefCell<KeyboardState>>, renderer: &Renderer) -> Game {
-        let tile_info = box [
+        let tile_info = vec![
             TileInfo { solid: false, friction: 0.0 },
 
             TileInfo { solid: true , friction: 1.0 },
@@ -96,7 +109,16 @@ impl Game {
         let player = create_player(Vec2::new(50.0, 50.0), keyboard, human_spritesheet.clone());
         let cat = create_cat(Vec2::new(400.0, 50.0), cat_spritesheet.clone());
 
-        let background = renderer.load_texture(&Path::new("./assets/background.png"))
+        let lava_texture = Rc::new(
+                renderer.load_texture(&Path::new("./assets/blocks/lava_anim.png"))
+                .ok().expect("Failed to load lava sprite"));
+        let lava = vec![
+            create_lava_block(Vec2::new(100.0, 800.0), lava_texture.clone()),
+            create_lava_block(Vec2::new(100.0+32.0, 800.0), lava_texture.clone()),
+            create_lava_block(Vec2::new(100.0+64.0, 800.0), lava_texture.clone()),
+        ];
+
+        let background = box renderer.load_texture(&Path::new("./assets/background.png"))
                 .ok().expect("Failed to load background image");
 
         // Load font spritesheet
@@ -109,6 +131,7 @@ impl Game {
             map: map,
             player: player,
             cat: cat,
+            lava: lava,
             font: font,
             tileset: tileset,
             camera: Vec2::zero(),
@@ -120,6 +143,9 @@ impl Game {
         let map = &self.map;
         self.player.update(map, secs);
         self.cat.update(map, secs);
+        self.lava.get_mut(0).update(map, secs);
+        self.lava.get_mut(1).update(map, secs);
+        self.lava.get_mut(2).update(map, secs);
     }
 
     pub fn draw(&mut self, renderer: &Renderer) {
@@ -136,6 +162,9 @@ impl Game {
         self.map.draw(self.camera, renderer);
         self.player.draw(self.camera, renderer);
         self.cat.draw(self.camera, renderer);
+        self.lava.get(0).draw(self.camera, renderer);
+        self.lava.get(0).draw(self.camera, renderer);
+        self.lava.get(0).draw(self.camera, renderer);
 
         static test_string: &'static str =
 r#"Test string,
@@ -146,7 +175,7 @@ with multiple lines."#;
 }
 
 fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
-        spritesheet: Rc<~Texture>) -> Entity<Creature, KeyboardController> {
+        spritesheet: Rc<Texture>) -> Entity<Creature, KeyboardController> {
     let fw = 64;
     let fh = 128;
     let idle = Animation {
@@ -224,7 +253,7 @@ fn create_player(position: Vec2<f32>, keyboard: Rc<RefCell<KeyboardState>>,
 }
 
 fn create_cat(position: Vec2<f32>,
-        spritesheet: Rc<~Texture>) -> Entity<Creature, RandomController> {
+        spritesheet: Rc<Texture>) -> Entity<Creature, RandomController> {
     let fw = 40;
     let fh = 32;
     let idle = Animation {
@@ -298,5 +327,26 @@ fn create_cat(position: Vec2<f32>,
             }
         ),
         controller: RandomController::new(0.5),
+    }
+}
+
+fn create_lava_block(pos: Vec2<f32>,
+        spritesheet: Rc<Texture>) -> Entity<DamageBlock, NoneController<DamageBlock>> {
+    let lava_animation = Animation {
+        sprite: Sprite {
+            spritesheet : spritesheet.clone(),
+            offset      : Vec2::new(0, 0),
+            frame_width : 32,
+            frame_height: 32,
+            num_frames_x: 5,
+            num_frames_y: 1,
+        },
+        frame_time: 0.06,
+        repeat: true,
+    };
+
+    Entity {
+        object: DamageBlock::new(Rect::new(pos.x, pos.y, 32.0, 32.0), 1.0, lava_animation),
+        controller: NoneController::<DamageBlock>::new(),
     }
 }

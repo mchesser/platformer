@@ -1,5 +1,5 @@
 use std::iter::range_step_inclusive;
-use std::num::{min, max, abs, clamp, Round};
+use std::num::FloatMath;
 
 use gmath::vectors::Vec2;
 use gmath::shapes::Rect;
@@ -9,6 +9,7 @@ use game::controller::Controller;
 use sdl2::render::Renderer;
 
 pub mod creature;
+pub mod blocks;
 
 static PIXEL_SCALE: f32 = 52.0;
 static GRAVITY: f32 = 9.8;
@@ -16,8 +17,8 @@ static GRAVITY: f32 = 9.8;
 /// Structure for an entity. An entity consists of a object and a controller.
 /// The controller can be used to support AI as well as user input control
 pub struct Entity<A, B> {
-    object: A,
-    controller: B,
+    pub object: A,
+    pub controller: B,
 }
 
 impl<A: Object, B: Controller<A>> Entity<A, B> {
@@ -121,15 +122,15 @@ pub trait Physics: Object {
 /// A structure that contains important values that are used for physics calculations
 pub struct PhysicalProperties {
     // The drag coefficent of the object
-    c_drag: f32,
+    pub c_drag: f32,
     // The mass of the object (kg)
-    mass: f32,
+    pub mass: f32,
     // The cross-sectional area of the object (m^2)
-    cross_area: f32,
+    pub cross_area: f32,
     // The maximum horizontal velocity of the object (m/s)
-    max_vel_x: f32,
+    pub max_vel_x: f32,
     // A friction modifier used for extra control on getting the object to stop
-    stop_bonus: f32,
+    pub stop_bonus: f32,
 }
 
 
@@ -146,10 +147,13 @@ pub struct PhysicalProperties {
 /// Returns true if friction should be applied to the object, or false if it friction should not be
 /// applied.
 fn apply_friction<T: Physics>(object: &T) -> bool {
-    abs(object.acceleration().x) == 0.0 || (object.velocity().x != 0.0 &&
+    object.acceleration().x.abs() == 0.0 || (object.velocity().x != 0.0 &&
             object.velocity().x.signum() != object.acceleration().x.signum())
 }
 
+fn clamp(value: f32, min: f32, max: f32) -> f32 {
+    value.min(max).max(min)
+}
 
 /// Update object based on physics
 /// # Arguments
@@ -167,10 +171,10 @@ pub fn physics<T: Physics>(object: &mut T, map: &Map, secs: f32) {
         let friction = 0.9 * GRAVITY * object.get_properties().stop_bonus * secs;
         new_velocity.x =
             if new_velocity.x < 0.0 {
-                min(new_velocity.x + friction, 0.0)
+                (new_velocity.x + friction).min(0.0)
             }
             else {
-                max(new_velocity.x - friction, 0.0)
+                (new_velocity.x - friction).max(0.0)
             };
     }
 
@@ -183,7 +187,7 @@ pub fn physics<T: Physics>(object: &mut T, map: &Map, secs: f32) {
     // Calculate the new x position
     let move_x = object.velocity().x * secs * PIXEL_SCALE;
     let collision_x = map_collision_x(object, map, move_x);
-    if abs(move_x) > abs(collision_x) {
+    if move_x.abs() > collision_x.abs() {
         new_position.x += collision_x;
         new_velocity.x = 0.0;
         object.set_hit_wall(true);
@@ -197,7 +201,7 @@ pub fn physics<T: Physics>(object: &mut T, map: &Map, secs: f32) {
     // Calculate the new y position
     let move_y = new_velocity.y * secs * PIXEL_SCALE;
     let collision_y = map_collision_y(object, map, move_y);
-    if abs(move_y) > abs(collision_y) {
+    if move_y.abs() > collision_y.abs() {
         new_position.y += collision_y;
         new_velocity.y = 0.0;
         object.set_on_ground(true);
@@ -231,6 +235,24 @@ fn air_resistance<T: Physics>(object: &T) -> Vec2<f32> {
     else {
         // Below the threshold velocity the air resistance is 0
         Vec2::<f32>::zero()
+    }
+}
+
+fn max<T: Num + TotalOrd>(left: T, right: T) -> T {
+    if left < right {
+        right
+    }
+    else {
+        left
+    }
+}
+
+fn min<T: Num + TotalOrd>(left: T, right: T) -> T {
+    if left < right {
+        left
+    }
+    else {
+        right
     }
 }
 
