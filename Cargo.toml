@@ -1,0 +1,10 @@
+[package]
+name = "platformer"
+version = "0.1.0"
+authors = ["Michael Chesser"]
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.65"
+macroquad = { version = "0.3.24", default-features = false }
+rand = "0.8.5"

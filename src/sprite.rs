@@ -1,109 +1,114 @@
-use std::rc::Rc;
-use sdl2::render::{Texture, Renderer};
-use sdl2::render::{RendererFlip, FlipNone, FlipHorizontal};
-use sdl2::rect::Rect;
+use macroquad::{
+    prelude::{Rect, UVec2, Vec2, WHITE},
+    texture::{draw_texture_ex, DrawTextureParams, Texture2D},
+};
 
-use gmath::vectors::Vec2;
+pub static NEXT_ANIMATION_ID: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
 
-#[deriving(Clone, Eq)]
+#[derive(Clone)]
 pub struct Sprite {
-    pub spritesheet: Rc<Texture>,
-    pub offset: Vec2<i32>,
-    pub frame_width: i32,
-    pub frame_height: i32,
-    pub num_frames_x: i32,
-    pub num_frames_y: i32,
+    pub spritesheet: Texture2D,
+    pub offset: UVec2,
+    pub frame_width: u32,
+    pub frame_height: u32,
+    pub num_frames_x: u32,
+    pub num_frames_y: u32,
 }
 
 impl Sprite {
-    pub fn draw(&self, frame: Vec2<i32>, pos: Vec2<i32>,
-            flip_state: RendererFlip, renderer: &Renderer) {
+    pub fn draw(&self, frame: UVec2, pos: Vec2, flip_x: bool) {
         assert!(frame.x < self.num_frames_x);
         assert!(frame.y < self.num_frames_y);
 
-        let source = Rect::new(self.offset.x + frame.x * self.frame_width,
-                self.offset.y + frame.y * self.frame_height,
-                self.frame_width,
-                self.frame_height);
-        let dest = Rect::new(pos.x, pos.y, self.frame_width, self.frame_height);
+        let source_rect = Rect::new(
+            self.offset.x as f32 + frame.x as f32 * self.frame_width as f32,
+            self.offset.y as f32 + frame.y as f32 * self.frame_height as f32,
+            self.frame_width as f32,
+            self.frame_height as f32,
+        );
 
-        renderer.copy_ex(self.spritesheet.deref(), Some(source), Some(dest),
-            0.0, None, flip_state);
+        let pos = pos.round();
+        let dest_rect = Rect::new(pos.x, pos.y, self.frame_width as f32, self.frame_height as f32);
+
+        draw_texture_ex(self.spritesheet, dest_rect.x, dest_rect.y, WHITE, DrawTextureParams {
+            dest_size: Some(dest_rect.size()),
+            source: Some(source_rect),
+            flip_x,
+            ..Default::default()
+        });
     }
 }
 
-#[deriving(Clone, Eq)]
+#[derive(Clone)]
 pub struct Animation {
+    pub id: usize,
     pub sprite: Sprite,
     pub frame_time: f32,
     pub repeat: bool,
 }
 
 pub struct AnimationPlayer {
-    animation: Animation,
-    frame: Vec2<i32>,
     pub speed_up: f32,
+    animation: Animation,
+    frame: UVec2,
     wait_time: f32,
     stopped: bool,
-    flip_state: RendererFlip,
+    flip_x: bool,
 }
 
 impl AnimationPlayer {
-    pub fn new(animation: Animation) -> AnimationPlayer {
-        AnimationPlayer {
-            animation: animation,
-            frame: Vec2::zero(),
+    pub fn new(animation: Animation) -> Self {
+        Self {
+            animation,
+            frame: UVec2::ZERO,
             speed_up: 1.0,
             wait_time: 0.0,
             stopped: false,
-            flip_state: FlipNone,
+            flip_x: false,
         }
     }
 
     pub fn play(&mut self, animation: Animation) {
-        if self.animation != animation {
+        if self.animation.id != animation.id {
             self.animation = animation;
             self.reset();
         }
     }
 
     pub fn reset(&mut self) {
-        self.frame = Vec2::zero();
+        self.frame = UVec2::ZERO;
         self.wait_time = 0.0;
         self.speed_up = 1.0;
         self.stopped = false;
     }
 
     pub fn flip_horizontal(&mut self, flip: bool) {
-        if flip {
-            self.flip_state = FlipHorizontal;
-        }
-        else {
-            self.flip_state = FlipNone;
-        }
+        self.flip_x = flip;
     }
 
     pub fn update(&mut self, secs: f32) {
-        if !self.stopped  && self.animation.frame_time != 0.0 {
+        if !self.stopped && self.animation.frame_time != 0.0 {
             self.wait_time += secs;
             while self.wait_time > self.animation.frame_time * self.speed_up {
                 self.wait_time -= self.animation.frame_time * self.speed_up;
-                self.frame.x =
-                    if self.frame.x+1 < self.animation.sprite.num_frames_x {
-                        self.frame.x + 1
+                self.frame.x = if self.frame.x + 1 < self.animation.sprite.num_frames_x {
+                    self.frame.x + 1
+                }
+                else {
+                    if !self.animation.repeat {
+                        self.stopped = true;
+                        break;
                     }
                     else {
-                        if !self.animation.repeat {
-                            self.stopped = true;
-                            break;
-                        }
-                        else { 0 }
-                    };
+                        0
+                    }
+                };
             }
         }
     }
 
-    pub fn draw(&self, pos: Vec2<i32>, renderer: &Renderer) {
-        self.animation.sprite.draw(self.frame, pos, self.flip_state, renderer);
+    pub fn draw(&self, pos: Vec2) {
+        self.animation.sprite.draw(self.frame, pos, self.flip_x);
     }
 }

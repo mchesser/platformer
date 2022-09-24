@@ -1,8 +1,7 @@
-use std::rc::Rc;
-use sdl2::render::{Texture, Renderer, FlipNone};
+use macroquad::prelude::{UVec2, Vec2};
+use macroquad::texture::Texture2D;
 
-use game::sprite::Sprite;
-use gmath::vectors::Vec2;
+use crate::sprite::Sprite;
 
 /// A bitfont that can be used for rendering text
 pub struct BitFont {
@@ -20,13 +19,18 @@ impl BitFont {
     /// `texture` - The bitfont texture
     /// # Return
     /// A bit font using the texture specified
-    pub fn new(ascii_offset: u8, num_chars: i32, char_width: i32, char_height: i32,
-            texture: Rc<Texture>) -> BitFont {
+    pub fn new(
+        ascii_offset: u8,
+        num_chars: u32,
+        char_width: u32,
+        char_height: u32,
+        texture: Texture2D,
+    ) -> BitFont {
         BitFont {
-            ascii_offset: ascii_offset,
+            ascii_offset,
             sprite: Sprite {
                 spritesheet: texture,
-                offset: Vec2::zero(),
+                offset: UVec2::ZERO,
                 frame_width: char_width,
                 frame_height: char_height,
                 num_frames_x: num_chars,
@@ -40,20 +44,20 @@ impl BitFont {
     /// `position` - The position to draw the text at
     /// `text` - The text to draw
     /// `renderer` - The renderer
-    pub fn draw_text(&self, position: Vec2<i32>, text: &str, renderer: &Renderer) {
+    pub fn draw_text(&self, position: Vec2, text: &str) {
         let mut pos = position;
         for char in text.bytes() {
-            if char == '\n' as u8 {
-                pos.y += self.sprite.frame_height;
+            if char == b'\n' {
+                pos.y += self.sprite.frame_height as f32;
                 pos.x = position.x;
             }
-            else if char == '\r' as u8 {
+            else if char == b'\r' {
                 // Discard
             }
             else {
-                let char = (char - self.ascii_offset) as i32;
-                self.sprite.draw(Vec2::new(char, 0), pos, FlipNone, renderer);
-                pos.x += self.sprite.frame_width;
+                let char = char - self.ascii_offset;
+                self.sprite.draw([char as u32, 0].into(), pos, false);
+                pos.x += self.sprite.frame_width as f32;
             }
         }
     }

@@ -1,119 +1,93 @@
-use std::rc::Rc;
-use std::io::{File, BufReader, MemReader};
+use std::{fs::File, io::Read, path::Path};
 
-use sdl2::render;
-use sdl2::rect::Rect;
+use anyhow::Context;
+use macroquad::prelude::{Rect, Vec2};
 
-use gmath::vectors::Vec2;
-use game::tiles::{TileSet, TileInfo};
+use crate::tiles::{TileInfo, TileSet};
 
 pub struct Map {
+    pub width: usize,
+    pub height: usize,
     tiles: Vec<u16>,
-    width_: uint,
-    height_: uint,
-    tileset: Rc<TileSet>,
+    tileset: TileSet,
 }
 
 impl Map {
     /// Loads a map from a file
-    pub fn load_map(file: &mut File, tileset: Rc<TileSet>) -> Map {
+    pub fn load_map(path: &Path, tileset: TileSet) -> anyhow::Result<Self> {
         static VERSION: u8 = 1;
-        static MAGIC_ID: [u8, ..3] = ['M' as u8, 'A' as u8, 'P' as u8];
+        static MAGIC_ID: [u8; 3] = *b"MAP";
 
-        let mut header_buffer = [0, ..12];
+        let mut file =
+            File::open(path).with_context(|| format!("failed to open: {}", path.display()))?;
+
+        let mut header = [0; 12];
         // Load header into the buffer
-        match file.read(header_buffer) {
-            Ok(n) if n == 12 => {},
-            _ => fail!("Could not read file header"),
+        match file.read(&mut header) {
+            Ok(n) if n == 12 => {}
+            _ => anyhow::bail!("Could not read file header"),
         }
 
-        let mut reader = BufReader::new(header_buffer);
-
         // Check the magic id
-        match (reader.read_byte(), reader.read_byte(), reader.read_byte()) {
-            (Ok(a), Ok(b), Ok(c)) if [a, b, c] == MAGIC_ID => {},
-            _ => fail!("Invalid magic id")
+        if &header[0..3] != &MAGIC_ID {
+            anyhow::bail!("Invalid magic id");
         }
 
         // Check the version number
-        match reader.read_byte() {
-            Ok(a) if a == VERSION => {},
-            _ => fail!("Invalid map version")
+        if header[3] != VERSION {
+            anyhow::bail!("Invalid map version");
         }
 
         // Get the width and height of the map
-        let width = match reader.read_le_u32() {
-            Ok(w) => w as uint,
-            Err(err) => fail!("Failed to get map width: {}", err.desc)
-        };
-        let height = match reader.read_le_u32() {
-            Ok(h) => h as uint,
-            Err(err) => fail!("Failed to get map height: {}", err.desc)
-        };
+        let width = u32::from_le_bytes(header[4..8].try_into().unwrap()) as usize;
+        let height = u32::from_le_bytes(header[8..12].try_into().unwrap()) as usize;
 
         // Read the tiles
-        let mut tile_buffer = Vec::from_elem(width * height * 2, 0u8);
-        match file.read(tile_buffer.as_mut_slice()) {
-            Ok(n) if n == width * height * 2 => {},
-            Ok(n) => fail!("Invalid number of tiles, expected: {}, but found: {}",
-                           width*height*2, n),
-            _ => fail!("Could not load map tiles")
+        let length = width * height * 2;
+        let mut tile_buffer = vec![0; length];
+        match file.read(&mut tile_buffer) {
+            Ok(n) if n == length => {}
+            Ok(n) => anyhow::bail!("Invalid number of tiles, expected: {length}, but found: {n}"),
+            _ => anyhow::bail!("Could not load map tiles"),
         }
 
-        let mut reader = MemReader::new(tile_buffer);
-        let tiles = Vec::from_fn(width * height, |_| {
-            match reader.read_le_u16() {
-                Ok(x) => x,
-                Err(err) => fail!("Failed to read map: {}", err.desc)
-            }
-        });
+        let tiles =
+            tile_buffer.chunks(2).map(|x| u16::from_le_bytes(x.try_into().unwrap())).collect();
 
-        Map {
-            tiles: tiles,
-            width_: width,
-            height_: height,
-            tileset: tileset,
-        }
+        Ok(Self { tiles, width, height, tileset })
     }
 
-    pub fn pixel_width(&self) -> i32 {
-        self.width_ as i32 * self.tile_size()
-    }
-
-    pub fn pixel_height(&self) -> i32 {
-        self.height_ as i32 * self.tile_size()
-    }
-
-    pub fn width(&self) -> uint {
-        self.width_
-    }
-
-    pub fn height(&self) -> uint {
-        self.height_
+    pub fn size(&self) -> Vec2 {
+        let tile_size = self.tile_size() as f32;
+        Vec2::new(self.width as f32 * tile_size, self.height as f32 * tile_size)
     }
 
     pub fn tile_size(&self) -> i32 {
         self.tileset.tile_size
     }
 
-    pub fn tile_info_at(&self, x: uint, y: uint) -> TileInfo {
+    pub fn tile_info_at(&self, x: usize, y: usize) -> TileInfo {
         self.tileset.id(self.get(x, y))
     }
 
-    fn get(&self, x: uint, y: uint) -> u16 {
-        assert!(x < self.width());
-        assert!(y < self.height());
-        *self.tiles.get(x + y * self.width())
+    fn get(&self, x: usize, y: usize) -> u16 {
+        assert!(x < self.width);
+        assert!(y < self.height);
+        self.tiles[x + y * self.width]
     }
 
-    pub fn draw(&self, camera: Vec2<i32>, renderer: &render::Renderer) {
-        for tile_x in range(0, self.width()) {
-            for tile_y in range(0, self.height()) {
-                let x = (tile_x * self.tile_size() as uint) as i32;
-                let y = (tile_y * self.tile_size() as uint) as i32;
-                let dest_rect = Rect::new(x - camera.x, y - camera.y,
-                        self.tile_size() as i32, self.tile_size() as i32);
-                self.tileset.draw(self.get(tile_x, tile_y), dest_rect, renderer);
+    pub fn draw(&self, camera: Vec2) {
+        for tile_x in 0..self.width {
+            for tile_y in 0..self.height {
+                let x = (tile_x * self.tile_size() as usize) as f32;
+                let y = (tile_y * self.tile_size() as usize) as f32;
+                let dest_rect = Rect::new(
+                    x - camera.x,
+                    y - camera.y,
+                    self.tile_size() as f32,
+                    self.tile_size() as f32,
+                );
+                self.tileset.draw(self.get(tile_x, tile_y), dest_rect);
             }
         }
     }
